@@ -12,3 +12,6 @@ for frame_indx in range(1,2):  # 控制读几帧画面
             agents.append(position+velocity)
             # break
         print(agents)
+        # 接下来对agent数据的操作包括
+        # position到像素的整理
+        # 速度到HSV图像的转换
