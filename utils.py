@@ -1,4 +1,5 @@
 import numpy as np
+import cmath
 
 
 def bit_product_sum(x, y):
@@ -91,8 +92,14 @@ def calc_ent_grap(x, y):
 
 
 if __name__ == '__main__':
-    a = [0, 0, 0, 0, 0, 0, 1, 2]
-    print(calc_ent(np.array(a)))
-    b = [1, 1, 1, 1, 1, 1, 2, 2]
-    print(calc_ent_grap(np.array(a), np.array(b)))
+    # a = [0, 0, 0, 0, 0, 0, 1, 2]
+    # print(calc_ent(np.array(a)))
+    # b = [1, 1, 1, 1, 1, 1, 2, 2]
+    # print(calc_ent_grap(np.array(a), np.array(b)))
+
     # print(cosine_similarity([1, 2], [0, 0]))
+
+    # cn = complex(-1, 0)
+    # mag, ang = cmath.polar(cn)
+    # print(ang)
+    print('for test')
