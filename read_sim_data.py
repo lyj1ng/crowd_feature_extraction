@@ -28,8 +28,8 @@ def hsv_to_rgb(h, s, v):
 def read_sim_data(folder='sim_data'):
     zoom_in = 20  # 视频的放大倍数
     # record size 形为 ( y , x )
+    # record_size = (10, 10)
     record_size = (10, 10)
-    # record_size = (18, 100)
     radius = int(0.38 * zoom_in)  # 调整行人的身体半径显示大小
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -121,5 +121,5 @@ def read_sim_data(folder='sim_data'):
 
 
 if __name__ == '__main__':
-    # read_sim_data(folder='full_size')
-    read_sim_data()
+    read_sim_data(folder='full_size')
+    # read_sim_data()
