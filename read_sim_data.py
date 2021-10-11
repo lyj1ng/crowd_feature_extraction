@@ -26,7 +26,7 @@ def hsv_to_rgb(h, s, v):
 
 
 def read_sim_data():
-    zoom_in = 40  # 视频的放大倍数
+    zoom_in = 20  # 视频的放大倍数
     radius = int(0.38 * zoom_in)  # 调整行人的身体半径显示大小
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -51,17 +51,23 @@ def read_sim_data():
                 # scale velocity
                 # turn velocity into color
                 vx = velocity[0]
-                vy = velocity[1]
+                vy = -1 * velocity[1]
                 cn = complex(vx, vy)
                 mag, ang = cmath.polar(cn)
                 mags.append(mag)
-                agents.append([(x, y), ang, mag])
+                # agents.append([(x, y), ang, mag])
+                # ang /= 3.14*2
+                # ang += 1
+                ang = (ang/(3.1416*2) + 1) % 1
+                agents.append([(x, y), ang, mag, velocity, position,hsv_to_rgb(ang, 1.0, mag)])
 
             background = np.zeros((zoom_in * 10, zoom_in * 10, 3), np.uint8)  # 创建黑色背景 10为q在仿真中截取的大小
             max_mag, min_mag = np.max(mags), np.min(mags)
             # mu, sigma = np.mean(mags),np.std(mags)
             for data in agents:
-                posi, ang, mag = data
+                posi = data[0]
+                ang = data[1]
+                mag = data[2]
                 if max_mag == min_mag:
                     mag = 0
                 else:
@@ -73,18 +79,17 @@ def read_sim_data():
                 # 为了后面保存 or 其他操作的需要（因为opencv无法操作float64），这里将float转为int因此要乘上255
                 cv2.circle(background, posi, radius, (b, g, r), -1)
 
-
-
             # 至此
             # 每帧 仿真 对应 的 运动场 渲染 完毕 ：cv2.imshow('frame xxx', background)可以进行输出
             cal_optical_flow = False
             if cal_optical_flow:
-                if frame_indx==1:
+                if frame_indx == 1:
                     prev_frame = background
                     continue
-                flow = cv2.calcOpticalFlowFarneback(prev_frame[:,:,2], background[:,:,2], None, 0.5, 3, 15, 3, 7, 1.5, 0)
+                flow = cv2.calcOpticalFlowFarneback(prev_frame[:, :, 2], background[:, :, 2], None, 0.5, 3, 15, 3, 7,
+                                                    1.5, 0)
                 mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-                hsv = np.zeros((10*zoom_in,10*zoom_in,3),np.uint8)
+                hsv = np.zeros((10 * zoom_in, 10 * zoom_in, 3), np.uint8)
                 hsv[..., 1] = 255
                 hsv[..., 0] = ang * 180 / np.pi / 2
                 hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
@@ -101,6 +106,10 @@ def read_sim_data():
                 cv2.imshow('frame1', background)
             k = cv2.waitKey(30) & 0xff
             if k == ord('q') or k == ord(' '):  # quit
+                print(frame_indx)
+                # debug information
+                # for a in agents:
+                #     print(a)
                 break
     out.release()
     cv2.destroyAllWindows()
