@@ -26,11 +26,11 @@ def hsv_to_rgb(h, s, v):
 
 
 def read_sim_data(folder='sim_data'):
-    zoom_in = 20  # 视频的放大倍数
+    zoom_in = 40  # 视频的放大倍数
     # record size 形为 ( y , x )
     # record_size = (10, 10)
-    record_size = (10, 20)
-    radius = int(0.38 * zoom_in)  # 调整行人的身体半径显示大小
+    record_size = (18, 100)
+    radius = int(0.28 * zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('./sim_to_optical_flow.avi', fourcc, 10,
@@ -77,6 +77,7 @@ def read_sim_data(folder='sim_data'):
                     mag = 0
                 else:
                     mag = (mag - min_mag) / (max_mag - min_mag)
+                mag *= 3
                 # mag = (mag - mu) / sigma
                 r, g, b = hsv_to_rgb(ang, 1.0, mag)
                 r, g, b = int(r * 255), int(g * 255), int(b * 255)
@@ -121,5 +122,5 @@ def read_sim_data(folder='sim_data'):
 
 
 if __name__ == '__main__':
-    # read_sim_data(folder='full_size')
-    read_sim_data()
+    read_sim_data(folder='full_size')
+    # read_sim_data()
