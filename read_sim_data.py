@@ -26,10 +26,10 @@ def hsv_to_rgb(h, s, v):
 
 
 def read_sim_data(folder='sim_data'):
-    zoom_in = 40  # 视频的放大倍数
+    zoom_in = 15  # 视频的放大倍数
     # record size 形为 ( y , x )
-    # record_size = (10, 10)
-    record_size = (18, 100)
+    # record_size = (10, 10) 看台(18,100)
+    record_size = (50, 100)
     radius = int(0.28 * zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -41,21 +41,29 @@ def read_sim_data(folder='sim_data'):
             agents = []  # 存储每个agent的画图信息
             mags = []  # 用于后续对速度进行正则化显示
             for line in fp.readlines()[3:-2]:  # 读取xml内容
+
+                z_position = line[line.index('z') + 3:line.index('z') + 4]
+                # print()
                 velocity = line.split()[1] + line.split()[2]
                 velocity = velocity[velocity.index('{') + 1:velocity.index('}')].split(';')
                 velocity = [float(i) for i in velocity]
                 position = line.split()[3] + line.split()[4]
+                # print(position)
                 position_x = position[position.index('x') + 3:position.index('x') + 7]
-                position_y = position[position.index('y') + 3:position.index('y') + 7]
+                y_fix_up = 9 if z_position=='0' else 7
+                y_position_fix = -1 if z_position=='0' else 1
+                position_y = position[position.index('y') + 3:position.index('y') + y_fix_up]
+                position_y = position_y.replace('"','')
+                # print(position_y,position_x)
                 # 接下来对agent数据的操作包括
                 # position到像素的整理
                 # 速度到HSV图像的转换
                 x = int(float(position_x) * zoom_in)  # scale position 0-10 to 0-480
-                y = int(float(position_y) * zoom_in)
+                y = y_position_fix*int(float(position_y) * zoom_in)
                 # scale velocity
                 # turn velocity into color
                 vx = velocity[0]
-                vy = -1 * velocity[1]
+                vy = y_position_fix*-1*velocity[1]
                 cn = complex(vx, vy)
                 mag, ang = cmath.polar(cn)
                 mags.append(mag)
@@ -122,5 +130,6 @@ def read_sim_data(folder='sim_data'):
 
 
 if __name__ == '__main__':
-    read_sim_data(folder='full_size')
+    # read_sim_data(folder='full_size')
+    read_sim_data(folder='bad_situation')
     # read_sim_data()
