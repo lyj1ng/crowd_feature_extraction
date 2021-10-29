@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import cmath
+from utils import *
 
 
 def hsv_to_rgb(h, s, v):
@@ -25,11 +26,15 @@ def hsv_to_rgb(h, s, v):
     if i == 5: return v, p, q
 
 
+def cal_partial_velocity(something):
+    return
+
+
 def show_sim_data(folder='sim_data'):
     zoom_in = 30  # 视频的放大倍数
     # record size 形为 ( y , x )
-    # record_size = (10, 10)
-    record_size = (18, 100)
+    record_size = (10, 10)
+    # record_size = (18, 100)
     radius = int(0.28 * zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -45,25 +50,43 @@ def show_sim_data(folder='sim_data'):
                 velocity = velocity[velocity.index('{') + 1:velocity.index('}')].split(';')
                 velocity = [float(i) for i in velocity]
                 position = line.split()[3] + line.split()[4]
-                position_x = position[position.index('x') + 3:position.index('x') + 7]
-                position_y = position[position.index('y') + 3:position.index('y') + 7]
+                position_x = float(position[position.index('x') + 3:position.index('x') + 7])
+                position_y = float(position[position.index('y') + 3:position.index('y') + 7])
 
-                x = int(float(position_x) * zoom_in)  # scale position 0-10 to 0-480
-                y = int(float(position_y) * zoom_in)
+                x = int(position_x * zoom_in)  # scale position 0-10 to 0-480
+                y = int(position_y * zoom_in)
 
-                agents.append([(x, y), 0, 0, velocity, position, (0,0,0)])
+                agents.append([(x, y), (position_x, position_y), velocity])
+                # agent的内容为【像素坐标，仿真坐标，仿真瞬时速度】
 
             background = np.full((zoom_in * record_size[0], zoom_in * record_size[1], 3),
-                                  255,np.uint8)  # 创建黑色背景 10为q在仿真中截取的大小
+                                 255, np.uint8)  # 创建黑色背景 10为q在仿真中截取的大小
+            # 计算群体压力指标：先计算局部速度和局部密度
+            print(frame_indx, end=' ')
+            position_to_test = [5, 5]
+            test_radius = 1
+            cv2.circle(background, [int(i*zoom_in) for i in position_to_test], int(test_radius*zoom_in), (0, 0, 0), -1)
+            velo_sum = np.zeros(2)
+            times = 0
+            for agent in agents:
+                posi = agent[1]
+                if euclid_distance(posi,position_to_test) < test_radius:
+                    velo_sum += agent[2]
+                    times += 1
+            if times:
+                velo_sum /= times
+            print(velo_sum,times)
+
+
             # max_mag, min_mag = np.max(mags), np.min(mags)
             # mu, sigma = np.mean(mags),np.std(mags)
             for data in agents:
                 posi = data[0]
 
-                b,g,r = 200,200,200  # body color
-                head = (200,100,100)  # head color
+                b, g, r = 200, 200, 200  # body color
+                head = (200, 100, 100)  # head color
                 cv2.circle(background, posi, radius, (b, g, r), -1)
-                cv2.circle(background, posi, int(radius*0.5), head, -1)
+                cv2.circle(background, posi, int(radius * 0.5), head, -1)
 
             # 至此
             # 每帧 仿真 对应 的 运动场 渲染 完毕 ：cv2.imshow('frame xxx', background)可以进行输出
@@ -92,7 +115,7 @@ def show_sim_data(folder='sim_data'):
                 cv2.imshow('frame1', background)
             k = cv2.waitKey(10) & 0xff
             if k == ord('q') or k == ord(' '):  # quit
-                print(frame_indx)
+                print('stop frame index : ', frame_indx)
                 # debug information
                 # for a in agents:
                 #     print(a)
@@ -102,5 +125,5 @@ def show_sim_data(folder='sim_data'):
 
 
 if __name__ == '__main__':
-    show_sim_data(folder='full_size')
-    # read_sim_data()
+    # show_sim_data(folder='full_size')
+    show_sim_data()
