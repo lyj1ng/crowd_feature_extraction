@@ -45,35 +45,40 @@ def local_measure(position, radius, agents):
     return local_density, local_velocity
 
 
-def show_sim_data(folder='sim_data'):
+def show_sim_data(folder='sim_data',output=False):
     """
     render simulation data and measure
     :param folder: which folder to be opened as simulation data
     :return: None:output render frame and measurement
     """
-    zoom_in = 30  # 视频的放大倍数
+    zoom_in = 15  # 视频的放大倍数
     # record size 形为 ( y , x )
-    record_size = (10, 10)
+    record_size = (40, 90)
     # record_size = (18, 100)
     radius = int(0.28 * zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('./sim_demo.avi', fourcc, 10,
+    if output:
+        out = cv2.VideoWriter('./sim_demo.avi', fourcc, 10,
                           (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
-
-    for frame_indx in range(1, 900):  # 控制读几帧画面
+    last_velocity = []
+    plot_data = []
+    for frame_indx in range(400, 1200):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             for line in fp.readlines()[3:-2]:  # 读取xml内容
+                z_position = line[line.index('z') + 3:line.index('z') + 4]
                 velocity = line.split()[1] + line.split()[2]
                 velocity = velocity[velocity.index('{') + 1:velocity.index('}')].split(';')
                 velocity = [float(i) for i in velocity]
                 position = line.split()[3] + line.split()[4]
                 position_x = float(position[position.index('x') + 3:position.index('x') + 7])
-                position_y = float(position[position.index('y') + 3:position.index('y') + 7])
-
+                y_fix_up = 9 if z_position == '0' else 7
+                y_position_fix = -1 if z_position == '0' else 1
+                position_y = position[position.index('y') + 3:position.index('y') + y_fix_up]
+                position_y = float(position_y.replace('"', ''))
                 x = int(position_x * zoom_in)  # scale position 0-10 to 0-480
-                y = int(position_y * zoom_in)
+                y = y_position_fix * int(position_y* zoom_in)
 
                 agents.append([(x, y), (position_x, position_y), velocity])
                 # agent的内容为【像素坐标，仿真坐标，仿真瞬时速度】
@@ -82,22 +87,27 @@ def show_sim_data(folder='sim_data'):
                                  255, np.uint8)  # 创建黑色背景 10为q在仿真中截取的大小
             # 计算群体压力指标：先计算局部速度和局部密度
             print('(', frame_indx, end=' frame) ')
-
-            position_to_test = [1, 5]
+            # test point : *Configuration*
+            position_to_test = [10, -22]
+            position_z_test = 0  # 1是看台层 ，0是出口层
             test_radius = 1
-            cv2.circle(background, [int(i * zoom_in) for i in position_to_test], int(test_radius * zoom_in),
+            # calculate measurement
+            y_position_fix = -1 if position_z_test == 0 else 1
+            position_in_video = [int(position_to_test[0]*zoom_in), y_position_fix*int(position_to_test[1]*zoom_in)]
+            cv2.circle(background, position_in_video, int(test_radius * zoom_in),
                        (0, 0, 255), -1)
             local_density, local_velocity = local_measure(position_to_test, test_radius, agents)
-            print(local_density, local_velocity)
-
+            velocity_variance = euclid_distance(local_velocity, last_velocity, False) if len(last_velocity) else 0
+            last_velocity = local_velocity
+            pressure = velocity_variance * local_density
+            print(round(pressure,4), round(local_density,2) )  # , local_velocity, )
+            # draw simulation
             for data in agents:
                 b, g, r = 200, 200, 200  # body color
                 head = (200, 100, 100)  # head color
                 cv2.circle(background, data[0], radius, (b, g, r), -1)
                 cv2.circle(background, data[0], int(radius * 0.5), head, -1)
-
-            # 至此
-            # 每帧 仿真 对应 的 运动场 渲染 完毕 ：cv2.imshow('frame xxx', background)可以进行输出
+            # (optional) draw optical flow
             cal_optical_flow = False
             if cal_optical_flow:
                 if frame_indx == 1:
@@ -115,23 +125,26 @@ def show_sim_data(folder='sim_data'):
                 # out.write(rgb)
                 # out2.write(imgs_show)
                 # background = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
-                out.write(background)
+                if output:
+                    out.write(background)
                 cv2.imshow('frame2', imgs_show)
                 prev_frame = background
             else:
-                out.write(background)
+                if output:
+                    out.write(background)
                 cv2.imshow('frame1', background)
-            k = cv2.waitKey(1) & 0xff
+            k = cv2.waitKey(100) & 0xff
             if k == ord('q') or k == ord(' '):  # quit
                 print('stop frame index : ', frame_indx)
                 # debug information
                 # for a in agents:
                 #     print(a)
                 break
-    out.release()
+    if output:
+        out.release()
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
-    # show_sim_data(folder='full_size')
-    show_sim_data()
+    show_sim_data(folder='bad_situation')
+    # show_sim_data()
