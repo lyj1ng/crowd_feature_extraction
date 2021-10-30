@@ -6,9 +6,11 @@ def bit_product_sum(x, y):
     return sum([item[0] * item[1] for item in zip(x, y)])
 
 
-def euclid_distance(point1, point2):
+def euclid_distance(point1, point2, root=True):
     # print(point1,point2)
-    ret = math.sqrt((point1[0]-point2[0])**2+(point1[1]-point2[1])**2)
+    ret = (point1[0]-point2[0])**2+(point1[1]-point2[1])**2
+    if root:
+        ret = math.sqrt(ret)
     # print(point1,point2,ret)
     return ret
 
