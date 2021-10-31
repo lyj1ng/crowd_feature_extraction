@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import cmath
 from utils import *
+import matplotlib.pyplot as plt
 
 
 def hsv_to_rgb(h, s, v):
@@ -45,7 +46,7 @@ def local_measure(position, radius, agents):
     return local_density, local_velocity
 
 
-def show_sim_data(folder='sim_data',output=False):
+def show_sim_data(folder='sim_data', output=False):
     """
     render simulation data and measure
     :param folder: which folder to be opened as simulation data
@@ -56,14 +57,15 @@ def show_sim_data(folder='sim_data',output=False):
     record_size = (40, 90)
     # record_size = (18, 100)
     radius = int(0.28 * zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
-
+    ax, ay = [], []
+    ay2 = []
+    plt.ion()
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     if output:
         out = cv2.VideoWriter('./sim_demo.avi', fourcc, 10,
-                          (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
-    last_velocity = []
-    plot_data = []
-    for frame_indx in range(400, 1200):  # 控制读几帧画面
+                              (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
+    velocity_data = []
+    for frame_indx in range(400, 1210):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             for line in fp.readlines()[3:-2]:  # 读取xml内容
@@ -78,7 +80,7 @@ def show_sim_data(folder='sim_data',output=False):
                 position_y = position[position.index('y') + 3:position.index('y') + y_fix_up]
                 position_y = float(position_y.replace('"', ''))
                 x = int(position_x * zoom_in)  # scale position 0-10 to 0-480
-                y = y_position_fix * int(position_y* zoom_in)
+                y = y_position_fix * int(position_y * zoom_in)
 
                 agents.append([(x, y), (position_x, position_y), velocity])
                 # agent的内容为【像素坐标，仿真坐标，仿真瞬时速度】
@@ -86,21 +88,32 @@ def show_sim_data(folder='sim_data',output=False):
             background = np.full((zoom_in * record_size[0], zoom_in * record_size[1], 3),
                                  255, np.uint8)  # 创建黑色背景 10为q在仿真中截取的大小
             # 计算群体压力指标：先计算局部速度和局部密度
-            print('(', frame_indx, end=' frame) ')
+            print('(', frame_indx, end=' frame)\t')
             # test point : *Configuration*
-            position_to_test = [10, -22]
+            # position_to_test = [15, -31.5]  # 出口层的一个入口
+            position_to_test = [12, -17]  # 出口层的内测
+            # position_to_test = [15.5, -20]  # 出口层的一个出口
             position_z_test = 0  # 1是看台层 ，0是出口层
-            test_radius = 1
+            test_radius = 0.7
             # calculate measurement
             y_position_fix = -1 if position_z_test == 0 else 1
-            position_in_video = [int(position_to_test[0]*zoom_in), y_position_fix*int(position_to_test[1]*zoom_in)]
+            position_in_video = [int(position_to_test[0] * zoom_in),
+                                 y_position_fix * int(position_to_test[1] * zoom_in)]
             cv2.circle(background, position_in_video, int(test_radius * zoom_in),
                        (0, 0, 255), -1)
             local_density, local_velocity = local_measure(position_to_test, test_radius, agents)
-            velocity_variance = euclid_distance(local_velocity, last_velocity, False) if len(last_velocity) else 0
-            last_velocity = local_velocity
+
+            if len(velocity_data) < 20:  # 此处的参数为时间间隔t用于控制计算速度方差
+                velocity_data.append(local_velocity)
+                velocity_variance = 0
+                # last_velocity = local_velocity
+            else:
+                velocity_data = velocity_data[1:]+[local_velocity]
+                # print(velocity_data)
+                velocity_variance = cal_velocity_variance(velocity_data)
+
             pressure = velocity_variance * local_density
-            print(round(pressure,4), round(local_density,2) )  # , local_velocity, )
+            print(round(pressure, 4), round(local_density, 2))  # , local_velocity, )
             # draw simulation
             for data in agents:
                 b, g, r = 200, 200, 200  # body color
@@ -133,7 +146,18 @@ def show_sim_data(folder='sim_data',output=False):
                 if output:
                     out.write(background)
                 cv2.imshow('frame1', background)
-            k = cv2.waitKey(100) & 0xff
+            ax.append(frame_indx)
+            ay.append(pressure)
+            # ay2.append(local_density)
+            plt.clf()
+            plt.plot(ax, ay)
+            plt.plot(ax, [0.02] * len(ax), linestyle='dashed')
+            # plt.plot(ax, ay2)
+            if frame_indx % 20 == 10:
+                plt.pause(0.001)
+            plt.ioff()
+            # plt.show()
+            k = cv2.waitKey(15) & 0xff
             if k == ord('q') or k == ord(' '):  # quit
                 print('stop frame index : ', frame_indx)
                 # debug information
@@ -143,6 +167,9 @@ def show_sim_data(folder='sim_data',output=False):
     if output:
         out.release()
     cv2.destroyAllWindows()
+    # plt.plot(ax, ay)
+    # plt.plot(ax, [0.02] * len(ax), linestyle='dashed')
+    plt.show()
 
 
 if __name__ == '__main__':

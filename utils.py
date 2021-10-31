@@ -1,5 +1,5 @@
 import numpy as np
-import cmath,math
+import cmath, math
 
 
 def bit_product_sum(x, y):
@@ -8,11 +8,23 @@ def bit_product_sum(x, y):
 
 def euclid_distance(point1, point2, root=True):
     # print(point1,point2)
-    ret = (point1[0]-point2[0])**2+(point1[1]-point2[1])**2
+    ret = (point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2
     if root:
         ret = math.sqrt(ret)
     # print(point1,point2,ret)
     return ret
+
+
+def cal_velocity_variance(velocity_distribution):
+    """
+    计算速度方差：用于后续计算群体压力指标
+    :param velocity_distribution: 输入速度的分布【v1，v2，v3】，其中v为二维空间中的速度矢量形如（vx，vy）
+    :return: 返回速度方差 = var(vx)+var(vy)
+    """
+    vx = [i[0] for i in velocity_distribution]
+    vy = [i[1] for i in velocity_distribution]
+    return np.var(vx) + np.var(vy)
+
 
 def cosine_similarity(x, y, norm=False):
     """ 计算两个向量x和y的余弦相似度 """
@@ -110,4 +122,7 @@ if __name__ == '__main__':
     # cn = complex(-1, 0)
     # mag, ang = cmath.polar(cn)
     # print(ang)
+    # vs = [(-1, -0, 5), (0, 1), (1, 0.5), (1, 1)]
+    # print(velocity_variance(vs))
+    # print(euclid_distance(vs[-1], vs[-2]))
     print('for test')
