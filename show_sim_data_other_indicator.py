@@ -3,6 +3,7 @@ import numpy as np
 import cmath
 from utils import *
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def hsv_to_rgb(h, s, v):
@@ -46,7 +47,7 @@ def local_measure(position, radius, agents):
     return local_density, local_velocity
 
 
-def show_sim_data(folder='sim_data', output=False):
+def show_sim_data_other(folder='sim_data', output=False):
     """
     render simulation data and measure
     :param folder: which folder to be opened as simulation data
@@ -65,8 +66,9 @@ def show_sim_data(folder='sim_data', output=False):
     if output:
         out = cv2.VideoWriter('./sim_demo.avi', fourcc, 10,
                               (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
-    velocity_data = []
-    for frame_indx in range(10, 1210):  # 控制读几帧画面
+    vi = 0
+    last_velocity = []
+    for frame_indx in range(3010, 4210):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             for line in fp.readlines()[3:-2]:  # 读取xml内容
@@ -97,12 +99,12 @@ def show_sim_data(folder='sim_data', output=False):
                 cv2.circle(background, data[0], int(radius * 0.5), head, -1)
             # 计算群体压力指标：先计算局部速度和局部密度
 
-            print('(', frame_indx, end=' frame)\t')
+            # print('(', frame_indx, end=' frame)\t')
             # test point : *Configuration*
             # position_to_test = [15, -31.5]  # 出口层的一个入口
-            # position_to_test = [12, -17]  # 出口层的内侧
+            position_to_test = [12, -17]  # 出口层的内侧
             # position_to_test = [11, -25]  # crowd but laminar first and laminar last
-            position_to_test = [13.5, -31.1]  # 交替
+            # position_to_test = [13.5, -31.1]  # 交替
             # position_to_test = [8.5, -25.8]  # 3300frame左右
             # position_to_test = [12, -17]
             # position_to_test = [17.5, -20]  # 出口层的一个出口
@@ -121,17 +123,15 @@ def show_sim_data(folder='sim_data', output=False):
             local_density, local_velocity = local_measure(position_to_test, test_radius, agents)
 
             if frame_indx % 1 == 0:  # 控制速度的采样间隔
-                if len(velocity_data) < 25:  # 此处的参数为时间间隔t用于控制计算速度方差
+                if len(last_velocity)<2:  # 此处的参数为时间间隔t用于控制计算速度方差
                     # t越小，pressure变化曲线越不平滑，得到的pressure越小
-                    velocity_data.append(local_velocity)
-                    velocity_variance = 0
+                    last_velocity = local_velocity
                 else:
-                    velocity_data = velocity_data[1:] + [local_velocity]
-                    # print(velocity_data)
-                    velocity_variance = cal_velocity_variance(velocity_data)
+                    vi = euclid_distance(local_velocity,[0,0]) - euclid_distance(last_velocity,[0,0])
+                    last_velocity=local_velocity
 
-            pressure = velocity_variance * local_density
-            print(round(pressure, 4), round(local_density, 2))  # , local_velocity, )
+            pressure = vi
+            # print(round(pressure, 4), round(local_density, 2))  # , local_velocity, )
 
             # (optional) draw optical flow
             cal_optical_flow = False
@@ -164,16 +164,19 @@ def show_sim_data(folder='sim_data', output=False):
                 ay.append(pressure)
             # ay2.append(local_density)
             plt.clf()
-            plt.title('CROWD PRESSURE of the circled area\n'
-                      + 'current density : ' + str(round(local_density, 2))
-                      + '\ncurrent pressure : ' + str(round(pressure, 4))
-                      )
-            l1, = plt.plot(ax, ay)
-            l2, = plt.plot(ax, [0.08] * len(ax), linestyle='dashed')
+            plt.title('distribution of velocity increment')
+            # l1, = plt.plot(ax, ay)
+            # l2, = plt.plot(ax, [0.0] * len(ax), linestyle='dashed')
+            xx = sns.distplot(ay,
+                              bins=100,
+                              kde=True,
+                              color='green',
+                              hist_kws={"linewidth": 15, 'alpha': 1})
+            xx.set(xlabel='Distribution', ylabel='Frequency')
             # if ax:
             #     plt.text(ax[0], 0.081, )
             # plt.plot(ax, ay2)
-            plt.legend([l1, l2], ['crowd pressure', 'threshold of 0.08'], loc='upper right')
+            # plt.legend([l1, l2], ['crowd pressure', 'zero'], loc='upper right')
             if True or frame_indx % 10 == 5:
                 plt.pause(0.001)
             plt.ioff()
@@ -192,5 +195,5 @@ def show_sim_data(folder='sim_data', output=False):
 
 if __name__ == '__main__':
     # show_sim_data(folder='bad_situation', output=False)
-    show_sim_data(folder='D:/simulation/congestion', output=False)
+    show_sim_data_other(folder='D:/simulation/congestion', output=False)
     # show_sim_data()
