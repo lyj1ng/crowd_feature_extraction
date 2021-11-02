@@ -59,7 +59,8 @@ def show_sim_data_other(folder='sim_data', output=False):
     # record_size = (18, 100)
     radius = int(0.28 * zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
     ax, ay = [], []
-    ay2 = []
+    ax2, ay2 = [], []
+    ax3, ay3 = [], []
     plt.ion()
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -68,7 +69,7 @@ def show_sim_data_other(folder='sim_data', output=False):
                               (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
     vi = 0
     last_velocity = []
-    for frame_indx in range(3010, 4210):  # 控制读几帧画面
+    for frame_indx in range(3800, 4210):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             for line in fp.readlines()[3:-2]:  # 读取xml内容
@@ -85,6 +86,7 @@ def show_sim_data_other(folder='sim_data', output=False):
                 position_y = float(position_y.replace('"', ''))
                 x = int(position_x * zoom_in)  # scale position 0-10 to 0-480
                 y = y_position_fix * int(position_y * zoom_in)
+
                 # print(position_y,position_x)
                 agents.append([(x, y), (position_x, position_y), velocity])
                 # agent的内容为【像素坐标，仿真坐标，仿真瞬时速度】
@@ -121,7 +123,13 @@ def show_sim_data_other(folder='sim_data', output=False):
                 cv2.circle(background, position_in_video, int(test_radius * zoom_in),
                            (50, 50, 253), 3)
             local_density, local_velocity = local_measure(position_to_test, test_radius, agents)
+            vx = local_velocity[0]
+            vy = local_velocity[1]
+            cn = complex(vx, vy)
 
+            _, ang = cmath.polar(cn)
+            ang = (ang / (3.1416 * 2) + 1) % 1
+            # mags.append(mag)
             if frame_indx % 1 == 0:  # 控制速度的采样间隔
                 if len(last_velocity)<2:  # 此处的参数为时间间隔t用于控制计算速度方差
                     # t越小，pressure变化曲线越不平滑，得到的pressure越小
@@ -162,17 +170,36 @@ def show_sim_data_other(folder='sim_data', output=False):
             if pressure:
                 ax.append(frame_indx / 10)
                 ay.append(pressure)
-            # ay2.append(local_density)
+            # ax2.append(local_velocity[0])
+            # ay2.append(local_velocity[1])
+            ax3.append(frame_indx / 10)
+            ay3.append(ang)
             plt.clf()
             plt.title('distribution of velocity increment')
             # l1, = plt.plot(ax, ay)
             # l2, = plt.plot(ax, [0.0] * len(ax), linestyle='dashed')
-            xx = sns.distplot(ay,
-                              bins=100,
-                              kde=True,
-                              color='green',
-                              hist_kws={"linewidth": 15, 'alpha': 1})
-            xx.set(xlabel='Distribution', ylabel='Frequency')
+            plot_increment_distribution=0
+            if plot_increment_distribution:  # plot distribution of velocity increment
+                xx = sns.distplot(ay,
+                                  bins=100,
+                                  kde=True,
+                                  color='green',
+                                  hist_kws={"linewidth": 15, 'alpha': 1})
+                xx.set(xlabel='Distribution', ylabel='Frequency')
+            plot_direction_distribution=0
+            if plot_direction_distribution:
+                axis = np.array(list(range(-20,21)))*0.01
+                plt.plot(axis, [0.0] * len(axis), linestyle='dashed',color='coral')
+                plt.plot( [0.0] * len(axis), axis,linestyle='dashed', color='coral')
+                plt.plot(ax2, ay2)
+            plot_direction_vary = 1
+            if plot_direction_vary:
+                xx = sns.distplot(ay3,
+                                  bins=10,
+                                  kde=False,
+                                  color='green',
+                                  hist_kws={"linewidth": 15, 'alpha': 1})
+                xx.set(xlabel='Distribution', ylabel='Frequency')
             # if ax:
             #     plt.text(ax[0], 0.081, )
             # plt.plot(ax, ay2)
