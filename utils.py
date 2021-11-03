@@ -14,6 +14,27 @@ def euclid_distance(point1, point2, root=True):
     # print(point1,point2,ret)
     return ret
 
+def hsv_to_rgb(h, s, v):
+    '''
+    :param h: hue 色相
+    :param s: 饱和度
+    :param v: magnitude
+    :return: instance like
+    hsv_to_rgb(359,1,1)
+    [1, 0.0, 0.0]
+    '''
+    if s == 0.0: return v, v, v
+    i = int(h * 6.)  # XXX assume int() truncates!
+    f = (h * 6.) - i
+    p, q, t = v * (1. - s), v * (1. - s * f), v * (1. - s * (1. - f))
+    i %= 6
+    if i == 0: return v, t, p
+    if i == 1: return q, v, p
+    if i == 2: return p, v, t
+    if i == 3: return p, q, v
+    if i == 4: return t, p, v
+    if i == 5: return v, p, q
+
 
 def cal_velocity_variance(velocity_distribution):
     """

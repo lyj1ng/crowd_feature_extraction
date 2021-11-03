@@ -26,7 +26,7 @@ def hsv_to_rgb(h, s, v):
 
 
 def read_sim_data(folder='sim_data'):
-    zoom_in = 15  # 视频的放大倍数
+    zoom_in = 5  # 视频的放大倍数
     # record size 形为 ( y , x )
     # record_size = (10, 10) 看台(18,100)
     record_size = (50, 100)
@@ -35,8 +35,8 @@ def read_sim_data(folder='sim_data'):
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('./sim_to_optical_flow.avi', fourcc, 10,
                           (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
-
-    for frame_indx in range(1, 900):  # 控制读几帧画面
+    first_frame = 1
+    for frame_indx in range(200, 1200):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             mags = []  # 用于后续对速度进行正则化显示
@@ -95,10 +95,11 @@ def read_sim_data(folder='sim_data'):
 
             # 至此
             # 每帧 仿真 对应 的 运动场 渲染 完毕 ：cv2.imshow('frame xxx', background)可以进行输出
-            cal_optical_flow = False
+            cal_optical_flow = True
             if cal_optical_flow:
-                if frame_indx == 1:
+                if first_frame == 1:
                     prev_frame = background
+                    first_frame = 0
                     continue
                 flow = cv2.calcOpticalFlowFarneback(prev_frame[:, :, 2], background[:, :, 2], None, 0.5, 3, 15, 3, 7,
                                                     1.5, 0)
