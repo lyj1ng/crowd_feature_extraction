@@ -40,7 +40,7 @@ def sample_points_from_render(position, vis, sample_times=20, radius=20):
 
 def local_color_from_render(position, vis, radius=10):
     # position = (position[1],position[0])
-    agents = sample_points_from_render(position, vis, radius=2 * radius)
+    agents = sample_points_from_render(position, vis, radius=2 * radius, sample_times=radius)
     return cal_local_velocity(position, agents, radius=radius)
 
 
@@ -51,7 +51,8 @@ class App:
         self.tracks = []
         self.stable_nodes = []
         self.cam = SimData(video_src)
-        self.cam.set('zoom', 30)
+        self.cam.set('size', (10,10))
+        self.cam.set('zoom', 40)
 
         width, height = self.cam.get(3), self.cam.get(4)
         print('video size  : ', width, height)
@@ -79,32 +80,30 @@ class App:
             start_time = time.time()
             # frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)  #################
             # print(frame_gray.shape)
-            filter_kernel = 1
+            filter_kernel = 15
             frame = cv.blur(frame, (filter_kernel, filter_kernel))  # 均值滤波
 
-            kd = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]
+            render_radius = 5
+            cal_radius = 5
+            axis_i = list(range(cal_radius, height-cal_radius, cal_radius * 2))
+            axis_j = list(range(cal_radius, width-cal_radius, cal_radius * 2))
             posis = []
             plots = []
-            for i in kd:
-                for j in kd:
-                    posis.append((i+50, j+50))
+            for i in axis_i:
+                for j in axis_j:
+                    posis.append((i, j))
 
             # 局部速度计算
             for posi in posis:
-                c = local_color_from_render(posi, frame, 3)
+                c = local_color_from_render(posi, frame, cal_radius)
                 c = [int(cc) if cc > 0 else 0 for cc in c]
-                # print(c)
 
-                # frame_gray = cv.blur(frame_gray, (filter_kernel, filter_kernel))  # 均值滤波
-                # vis = frame.copy()
-
-                # print(vis)
                 plots.append(c)
 
             # 局部速度可视化
             for i in range(len(posis)):
                 posi = posis[i]
-                cv.circle(frame, (posi[1],posi[0]), 5, plots[i], -1)
+                cv.circle(frame, (posi[1],posi[0]), render_radius, plots[i], -1)
 
             sep_time = time.time() - start_time
             fr = round(1 / (sep_time), 1) if sep_time else 'inf'
@@ -114,7 +113,6 @@ class App:
             # self.prev_gray = frame_gray
 
             # cv.circle(frame, [50,50], 2,(1,1,1), -1)
-
             cv.namedWindow('lk_track', 0)
             cv.imshow('lk_track', frame)
             ch = cv.waitKey(30)
