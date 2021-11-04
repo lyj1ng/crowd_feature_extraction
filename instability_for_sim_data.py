@@ -18,7 +18,7 @@ def cal_local_velocity(position, agents, radius=10):
     local_density = 0
     local_color = np.zeros(3)
     for agent in agents:
-        weight = np.exp(-1 * euclid_distance(agent[1], position, root=False) / (radius ** 2))
+        weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
         local_density += weight
         local_color += weight * np.array(agent[1])
     local_color /= local_density
@@ -34,7 +34,7 @@ def sample_points_from_render(position, vis, sample_times=20, radius=20):
         # if sample_position[0]>0  # 此处待加入限制
         # print(sample_position)
         ret.append([sample_position, vis[sample_position]])
-    ret = [[position,vis[position]]]
+    # ret = [[position,vis[position]]]
     return ret
 
 
@@ -51,7 +51,7 @@ class App:
         self.tracks = []
         self.stable_nodes = []
         self.cam = SimData(video_src)
-        self.cam.set('zoom', 40)
+        self.cam.set('zoom', 30)
 
         width, height = self.cam.get(3), self.cam.get(4)
         print('video size  : ', width, height)
@@ -84,11 +84,12 @@ class App:
 
             kd = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]
             posis = []
+            plots = []
             for i in kd:
                 for j in kd:
-                    posis.append((i, j))
+                    posis.append((i+50, j+50))
 
-            #
+            # 局部速度计算
             for posi in posis:
                 c = local_color_from_render(posi, frame, 3)
                 c = [int(cc) if cc > 0 else 0 for cc in c]
@@ -98,8 +99,12 @@ class App:
                 # vis = frame.copy()
 
                 # print(vis)
-                b, g, r = c
-                cv.circle(frame, (posi[0],posi[1]), 5, (b, g, r), -1)
+                plots.append(c)
+
+            # 局部速度可视化
+            for i in range(len(posis)):
+                posi = posis[i]
+                cv.circle(frame, (posi[1],posi[0]), 5, plots[i], -1)
 
             sep_time = time.time() - start_time
             fr = round(1 / (sep_time), 1) if sep_time else 'inf'
