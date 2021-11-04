@@ -52,15 +52,16 @@ class App:
         self.stable_nodes = []
         self.cam = SimData(video_src)
         self.cam.set('size', (10, 10))
-        self.cam.set('zoom', 40)
+        self.cam.set('zoom', 20)
 
         width, height = self.cam.get(3), self.cam.get(4)
         print('video size  : ', width, height)
         self.frame_idx = 0
+        self.vary = None
 
     def run(self):
         with open('./instability_graph.csv', 'w+') as fp:
-            fp.write('node attribute,position,V point,V wave,video index\n')
+            fp.write('frame index,node position,ent\n')
         width, height = self.cam.get(3), self.cam.get(4)
         index = -1
         while True:
@@ -79,14 +80,15 @@ class App:
 
             render_radius = 5
             cal_radius = 5
-            axis_i = list(range(cal_radius, height-cal_radius, cal_radius * 2))
-            axis_j = list(range(cal_radius, width-cal_radius, cal_radius * 2))
+            axis_i = list(range(cal_radius, height - cal_radius, cal_radius * 2))
+            axis_j = list(range(cal_radius, width - cal_radius, cal_radius * 2))
             posis = []
             plots = []
             for i in axis_i:
                 for j in axis_j:
                     posis.append((i, j))
-
+            if not self.vary:  # 第一次进行vary的初始化
+                self.vary = [[] for _ in range(len(posis))]
             # 局部速度计算
             for posi in posis:
                 c = local_color_from_render(posi, frame, cal_radius)
@@ -94,10 +96,20 @@ class App:
 
                 plots.append(c)
 
-            # 局部速度可视化
+            # 局部速度可视化 同时更新vary
             for i in range(len(posis)):
                 posi = posis[i]
-                cv.circle(frame, (posi[1],posi[0]), render_radius, plots[i], -1)
+                hue, sat, val = rgb_to_hsv(plots[i][0], plots[i][1], plots[i][2])
+                hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 ##########################
+                if len(self.vary[i]) < 20:
+                    self.vary[i].append(hue)
+                else:
+                    self.vary[i] = self.vary[i][:-1] + [hue]
+                    ent = calc_ent(np.array(self.vary[i]))
+                # print(np.array(self.vary[i]),ent)
+                    with open('./instability_graph.csv', 'a+') as fp:
+                        fp.write(str(self.frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1]) + ',' + str(ent) + '\n')
+                cv.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
 
             sep_time = time.time() - start_time
             fr = round(1 / (sep_time), 1) if sep_time else 'inf'
@@ -109,7 +121,7 @@ class App:
             # cv.circle(frame, [50,50], 2,(1,1,1), -1)
             cv.namedWindow('lk_track', 0)
             cv.imshow('lk_track', frame)
-            ch = cv.waitKey(30)
+            ch = cv.waitKey(3)
             if ch == ord(' '):  # quit
                 break
 
