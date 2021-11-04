@@ -51,7 +51,7 @@ class App:
         self.tracks = []
         self.stable_nodes = []
         self.cam = SimData(video_src)
-        self.cam.set('size', (10,10))
+        self.cam.set('size', (10, 10))
         self.cam.set('zoom', 40)
 
         width, height = self.cam.get(3), self.cam.get(4)
@@ -71,12 +71,6 @@ class App:
             if index % 6 != 0:
                 pass
                 # continue
-            # if check_sim_optical_data_only:
-            #    cv.imshow('lk_track', frame)
-            #    ch = cv.waitKey(100)
-            #    if ch == ord('q'):  # quit
-            #        break
-            #    continue
             start_time = time.time()
             # frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)  #################
             # print(frame_gray.shape)
