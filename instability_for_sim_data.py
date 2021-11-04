@@ -25,23 +25,23 @@ def cal_local_velocity(position, agents, radius=10):
     return local_color
 
 
-def sample_points_from_render(position, vis, sample_times=10, radius=20):
+def sample_points_from_render(position, vis, sample_times=20, radius=20):
     ret = []
-    vis=np.array(vis)
+    vis = np.array(vis)
     for i in range(sample_times):
-        xi, yi = np.random.randint(-1*radius,radius), np.random.randint(-1*radius,radius)
-        sample_position = (position[0]+xi,position[1]+yi)
+        xi, yi = np.random.randint(-1 * radius, radius), np.random.randint(-1 * radius, radius)
+        sample_position = (position[0] + xi, position[1] + yi)
         # if sample_position[0]>0  # 此处待加入限制
         # print(sample_position)
-        ret.append([sample_position,vis[sample_position]])
+        ret.append([sample_position, vis[sample_position]])
+    ret = [[position,vis[position]]]
     return ret
 
 
-def local_color_from_render(position,vis,radius=10):
+def local_color_from_render(position, vis, radius=10):
     # position = (position[1],position[0])
-    agents = sample_points_from_render(position,vis,radius=2*radius)
-    return cal_local_velocity(position,agents,radius=radius)
-
+    agents = sample_points_from_render(position, vis, radius=2 * radius)
+    return cal_local_velocity(position, agents, radius=radius)
 
 
 class App:
@@ -51,12 +51,14 @@ class App:
         self.tracks = []
         self.stable_nodes = []
         self.cam = SimData(video_src)
+        self.cam.set('zoom', 40)
+
         width, height = self.cam.get(3), self.cam.get(4)
         print('video size  : ', width, height)
         self.frame_idx = 0
 
     def run(self):
-        with open('./graph.csv', 'w+') as fp:
+        with open('./instability_graph.csv', 'w+') as fp:
             fp.write('node attribute,position,V point,V wave,video index\n')
         width, height = self.cam.get(3), self.cam.get(4)
         index = -1
@@ -77,29 +79,27 @@ class App:
             start_time = time.time()
             # frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)  #################
             # print(frame_gray.shape)
-            filter_kernel = 15
+            filter_kernel = 1
             frame = cv.blur(frame, (filter_kernel, filter_kernel))  # 均值滤波
 
             kd = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]
             posis = []
             for i in kd:
                 for j in kd:
-                    posis.append((i,j))
+                    posis.append((i, j))
 
             #
             for posi in posis:
-                c=local_color_from_render(posi, frame, 10)
-                c= [int(cc) if cc>0 else 0 for cc in c]
+                c = local_color_from_render(posi, frame, 3)
+                c = [int(cc) if cc > 0 else 0 for cc in c]
                 # print(c)
 
                 # frame_gray = cv.blur(frame_gray, (filter_kernel, filter_kernel))  # 均值滤波
                 # vis = frame.copy()
 
                 # print(vis)
-                b,g,r = c
-                cv.circle(frame, posi, 5, (b,g,r), -1)
-
-
+                b, g, r = c
+                cv.circle(frame, (posi[0],posi[1]), 5, (b, g, r), -1)
 
             sep_time = time.time() - start_time
             fr = round(1 / (sep_time), 1) if sep_time else 'inf'
@@ -110,10 +110,9 @@ class App:
 
             # cv.circle(frame, [50,50], 2,(1,1,1), -1)
 
-
             cv.namedWindow('lk_track', 0)
             cv.imshow('lk_track', frame)
-            ch = cv.waitKey(10)
+            ch = cv.waitKey(30)
             if ch == ord(' '):  # quit
                 break
 

@@ -12,13 +12,31 @@ class SimData:
     :method get    : get the pixel size of output image
     :method read   : read sim data and output sim_optical_flow like a cam (like opencv library)
     """
+
     def __init__(self, sim_src):
         self.folder = sim_src
         self.start_idx, self.end_idx = 200, 900
         self.zoom_in = 25
         self.record_size = (10, 10)
-        self.radius = int(0.28 * self.zoom_in)
+        self.human_radius = 0.28
         self.idx = self.start_idx
+
+    def set(self, config, value):
+        """
+        设置仿真参数
+        :param config: in ['idx','zoom','size','human_radius']
+        :param value: set the value of config
+        :return:
+        """
+        if config == 'idx':
+            self.start_idx = value[0]
+            self.end_idx = value[1]
+        elif config == 'zoom':
+            self.zoom_in = value
+        elif config == 'size':
+            self.record_size = value
+        elif config == 'human_radius':
+            self.human_radius = value
 
     def get(self, num):
         if num == 4:
@@ -32,7 +50,7 @@ class SimData:
         # record size 形为 ( y , x )
         # record_size = (10, 10) 看台(18,100)
         record_size = self.record_size
-        radius = self.radius  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
+        radius = int(self.human_radius * self.zoom_in)  # 调整行人的身体半径显示大小  # previous value:0.38略挤但融合
         frame_indx = self.idx
         if self.idx > self.end_idx:
             return False, False
