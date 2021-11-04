@@ -25,7 +25,7 @@ def cal_local_velocity(position, agents, radius=10):
     return local_color
 
 
-def sample_points_from_render(position, vis, sample_times=400, radius=20):
+def sample_points_from_render(position, vis, sample_times=10, radius=20):
     ret = []
     vis=np.array(vis)
     for i in range(sample_times):
@@ -74,22 +74,30 @@ class App:
             #    if ch == ord('q'):  # quit
             #        break
             #    continue
-            posi = (150, 150)
-            #
-
-            c=local_color_from_render(posi, frame, 10)
-            c= [int(cc) if cc>0 else 0 for cc in c]
-            print(c)
             start_time = time.time()
             # frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)  #################
             # print(frame_gray.shape)
             filter_kernel = 15
-            # frame_gray = cv.blur(frame_gray, (filter_kernel, filter_kernel))  # 均值滤波
-            # vis = frame.copy()
             frame = cv.blur(frame, (filter_kernel, filter_kernel))  # 均值滤波
-            # print(vis)
-            b,g,r = c
-            cv.circle(frame, posi, 5, (b,g,r), -1)
+
+            kd = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]
+            posis = []
+            for i in kd:
+                for j in kd:
+                    posis.append((i,j))
+
+            #
+            for posi in posis:
+                c=local_color_from_render(posi, frame, 10)
+                c= [int(cc) if cc>0 else 0 for cc in c]
+                # print(c)
+
+                # frame_gray = cv.blur(frame_gray, (filter_kernel, filter_kernel))  # 均值滤波
+                # vis = frame.copy()
+
+                # print(vis)
+                b,g,r = c
+                cv.circle(frame, posi, 5, (b,g,r), -1)
 
 
 
