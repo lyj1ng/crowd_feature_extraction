@@ -14,6 +14,34 @@ def euclid_distance(point1, point2, root=True):
     # print(point1,point2,ret)
     return ret
 
+
+def rgb_to_hsv(r, g, b):
+    r, g, b = r/255.0, g/255.0, b/255.0
+    mx = max(r, g, b)
+    mn = min(r, g, b)
+    m = mx-mn
+    if mx == mn:
+        h = 0
+    elif mx == r:
+        if g >= b:
+            h = ((g-b)/m)*60
+        else:
+            h = ((g-b)/m)*60 + 360
+    elif mx == g:
+        h = ((b-r)/m)*60 + 120
+    elif mx == b:
+        h = ((r-g)/m)*60 + 240
+    if mx == 0:
+        s = 0
+    else:
+        s = m/mx
+    v = mx
+    H = h / 2
+    S = s * 255.0
+    V = v * 255.0
+    return H, S, V
+
+
 def hsv_to_rgb(h, s, v):
     '''
     :param h: hue 色相
@@ -133,11 +161,11 @@ def calc_ent_grap(x, y):
 
 
 if __name__ == '__main__':
-    # a = [0, 0, 0, 0, 0, 0, 1, 2]
+    # a = [2, 1, 1, 1, 1, 1, 1, 2]
     # print(calc_ent(np.array(a)))
     # b = [1, 1, 1, 1, 1, 1, 2, 2]
     # print(calc_ent_grap(np.array(a), np.array(b)))
-
+    print(rgb_to_hsv(255,0,0))
     # print(cosine_similarity([1, 2], [0, 0]))
 
     # cn = complex(-1, 0)
