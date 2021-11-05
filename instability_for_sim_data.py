@@ -59,9 +59,25 @@ class App:
     def run(self):
         with open('./instability_graph.csv', 'w+') as fp:
             # 进行节点稳定性信息的保存
-            fp.write('frame index,node position,ent\n')
+            fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,mutual info:right\n')
         width, height = self.cam.get(3), self.cam.get(4)
         index = -1
+
+        render_radius = 5
+        cal_radius = 5
+        axis_i = list(range(cal_radius, height - cal_radius, cal_radius * 2))
+        axis_j = list(range(cal_radius, width - cal_radius, cal_radius * 2))
+        # 所有点位的x，y轴位置
+        posis = []  # 存储所有node的position
+        position_map = {}  # position_map[position] = its_index
+        node_index = 0
+        for i in axis_i:
+            for j in axis_j:
+                # 遍历两个方向轴，得到所有点位的坐标
+                posis.append((i, j))
+                position_map[str(i) + ';' + str(j)] = node_index
+                node_index += 1
+
         while True:
             index += 1
             _ret, frame = self.cam.read()
@@ -71,20 +87,12 @@ class App:
                 pass
                 # continue
             start_time = time.time()  # 耗时计算
+
             filter_kernel = 15
             frame = cv.blur(frame, (filter_kernel, filter_kernel))  # 对画面进行 均值滤波
             # 一些参数：渲染半径 与 速度计算半径
-            render_radius = 5
-            cal_radius = 5
-            axis_i = list(range(cal_radius, height - cal_radius, cal_radius * 2))
-            axis_j = list(range(cal_radius, width - cal_radius, cal_radius * 2))
-            # 所有点位的x，y轴位置
-            posis = []  # 存储所有node的position
+
             plots = []  # 存储所有node的即时local color
-            for i in axis_i:
-                for j in axis_j:
-                    # 遍历两个方向轴，得到所有点位的坐标
-                    posis.append((i, j))
             if not self.vary:  # 第一次进行vary的初始化
                 self.vary = [[] for _ in range(len(posis))]
             # 对于所有的node 进行局部速度计算
@@ -100,16 +108,33 @@ class App:
                 if len(self.vary[i]) < 20:  # 如果速度变化不足20个，则先不计算信息熵
                     self.vary[i].append(hue)
                 else:
+                    # 数组的拼接
                     self.vary[i] = self.vary[i][1:] + [hue]
+                    # 计算信息熵
                     ent = calc_ent(np.array(self.vary[i]))
-                # print(np.array(self.vary[i]),ent)
+                    # 计算互信息：上下左右
+                    mutual_info = []
+                    for neighbor in [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0],
+                                     [2 * cal_radius, 0]]:
+                        neighbor_position = np.array(posi) + np.array(neighbor)
+                        neighbor_position = [str(p) for p in neighbor_position]
+                        neighbor_position = ';'.join(neighbor_position)
+                        # print(neighbor_position,position_map)
+                        if neighbor_position in position_map:
+                            n_vary = np.array(self.vary[position_map[neighbor_position]])
+                            mutual_info.append(calc_ent_grap(np.array(self.vary[i]), n_vary))
+                        else:
+                            mutual_info.append(None)
+
                     with open('./instability_graph.csv', 'a+') as fp:
-                        fp.write(str(self.frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1]) + ',' + str(ent) + '\n')
+                        fp.write(str(self.frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1])
+                                 + ',' + str(ent) + ',' + str(mutual_info) + '\n')
 
                 cv.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
 
+            # real-time frame fresh rate
             sep_time = time.time() - start_time
-            fr = round(1 / (sep_time), 1) if sep_time else 'inf'
+            fr = round(1 / sep_time, 1) if sep_time else 'inf'
             print('\rframe_rate : ', fr, end=' fps ')
 
             self.frame_idx += 1
