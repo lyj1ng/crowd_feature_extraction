@@ -2,6 +2,49 @@ import numpy as np
 import cmath, math
 
 
+def cal_local_velocity(position, agents, radius=10):
+    """
+    calculate local density and velocity
+    :param position: position to measure:[0,0](position in modeling)
+    :param radius: radius R of measure:the bigger R,the smoothing area around position
+    :param agents: data of all agents:agent[0] is position and agent[1] is velocity
+    :return: local density and local velocity
+    """
+    local_density = 0
+    local_color = np.zeros(3)
+    for agent in agents:
+        weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
+        local_density += weight
+        local_color += weight * np.array(agent[1])
+    local_color /= local_density
+    return local_color
+
+
+def sample_points_from_render(position, vis, sample_times=20, radius=20):
+    ret = []
+    vis = np.array(vis)
+    for i in range(sample_times):
+        xi, yi = np.random.randint(-1 * radius, radius), np.random.randint(-1 * radius, radius)
+        sample_position = (position[0] + xi, position[1] + yi)
+        # if sample_position[0]>0  # 此处待加入限制
+        # print(sample_position)
+        ret.append([sample_position, vis[sample_position]])
+    # ret = [[position,vis[position]]]
+    return ret
+
+
+def local_color_from_render(position, vis, radius=10):
+    """
+    通过rgb帧vis，计算局部加权颜色
+    :param position: 形如（y，x） 其中y取自width ，x取自height
+    :param vis: rgb帧
+    :param radius: 计算半径
+    :return:返回加权颜色
+    """
+    agents = sample_points_from_render(position, vis, radius=2 * radius, sample_times=radius)
+    return cal_local_velocity(position, agents, radius=radius)
+
+
 def bit_product_sum(x, y):
     return sum([item[0] * item[1] for item in zip(x, y)])
 
@@ -16,25 +59,25 @@ def euclid_distance(point1, point2, root=True):
 
 
 def rgb_to_hsv(r, g, b):
-    r, g, b = r/255.0, g/255.0, b/255.0
+    r, g, b = r / 255.0, g / 255.0, b / 255.0
     mx = max(r, g, b)
     mn = min(r, g, b)
-    m = mx-mn
+    m = mx - mn
     if mx == mn:
         h = 0
     elif mx == r:
         if g >= b:
-            h = ((g-b)/m)*60
+            h = ((g - b) / m) * 60
         else:
-            h = ((g-b)/m)*60 + 360
+            h = ((g - b) / m) * 60 + 360
     elif mx == g:
-        h = ((b-r)/m)*60 + 120
+        h = ((b - r) / m) * 60 + 120
     elif mx == b:
-        h = ((r-g)/m)*60 + 240
+        h = ((r - g) / m) * 60 + 240
     if mx == 0:
         s = 0
     else:
-        s = m/mx
+        s = m / mx
     v = mx
     H = h / 2
     S = s * 255.0
@@ -165,9 +208,8 @@ if __name__ == '__main__':
     # print(calc_ent(np.array(a)))
     # b = [1, 1, 1, 1, 1, 1, 2, 2]
     # print(calc_ent_grap(np.array(a), np.array(b)))
-    print(rgb_to_hsv(255,0,0))
+    # print(rgb_to_hsv(255,0,0))
     # print(cosine_similarity([1, 2], [0, 0]))
-
     # cn = complex(-1, 0)
     # mag, ang = cmath.polar(cn)
     # print(ang)
