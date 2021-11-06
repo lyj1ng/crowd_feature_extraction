@@ -20,7 +20,7 @@ ESC - exit
 
 import numpy as np
 import cv2 as cv
-from utils import cosine_similarity, constrain_max_velocity
+from utils import *
 import time
 from sim_data_iterator import SimData
 
@@ -43,6 +43,8 @@ class App:
         self.tracks = []
         self.stable_nodes = []
         self.cam = SimData(video_src)
+        self.cam.set('size', (10, 10))
+        self.cam.set('zoom', 20)
         width, height = self.cam.get(3), self.cam.get(4)
         print('video size  : ', width, height)
         self.frame_idx = 0
@@ -72,7 +74,7 @@ class App:
             start_time = time.time()
             frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)  #################
             # print(frame_gray.shape)
-            filter_kernel = 2
+            filter_kernel = 15
             frame_gray = cv.blur(frame_gray, (filter_kernel, filter_kernel))  # 均值滤波
             vis = frame.copy()
             vis = cv.blur(vis, (filter_kernel, filter_kernel))  # 均值滤波
@@ -97,8 +99,10 @@ class App:
                         del tr[0]
                     try:
                         bgr_vector = vis[np.int32(y)][np.int32(x)]  # 获得了追踪点所代表的颜色 ,BGR通道
+                        bgr_vector = local_color_from_render((np.int32(y), np.int32(x)), vis, radius=5)
                     except:
                         continue  # 对于超出图像范围的追踪点 进行舍弃
+
                     if not constrain_max_velocity(np.array(tr[-1]) - np.array(tr[-2]), threshold=800):
                         # continue  # 相当于是对 V wave 进行了限制
                         pass   # 我又不限制了
@@ -107,7 +111,9 @@ class App:
                     red_vector, green_vector, blue_vector = (1, 0), (-0.5, 0.866), (-0.5, -0.866)
                     velocity_point = bgr_vector[0] * np.array(blue_vector) + bgr_vector[1] * np.array(green_vector) + \
                                      bgr_vector[2] * np.array(red_vector)
+                    velocity_point = [round(v, 2) for v in velocity_point]
                     velocity_wave = np.array(tr[-1]) - np.array(tr[0])
+                    velocity_wave = [round(v, 2) for v in velocity_wave]
                     # print(velocity_wave, velocity_point)
                     cos_wave = cosine_similarity(velocity_wave, velocity_point)
                     if constrain_max_velocity(velocity_wave, threshold=10):  # 首先筛选稳定节点
@@ -118,7 +124,7 @@ class App:
                         pass  # 不展示但是可以继续跟踪
                     else:
                         nodes.append(round(cos_wave))
-                        graph.append([round(cos_wave), (x, y), velocity_point, velocity_wave])
+                        graph.append([round(cos_wave), (round(x, 2), round(y, 2)), velocity_point, velocity_wave])
                         show_tracks.append(tr)
                         x, y = int(x), int(y)
                         cv.circle(vis, (x, y), 2, (0, 255, 0), -1)
@@ -134,9 +140,9 @@ class App:
                     # index = 0
                     for frame_graph in graph:
                         # fp.write('Frame ' + str(index) + '\n')
-                        fp.write(str(frame_graph[0]) + ',' + str(frame_graph[1][0]) + '，' + str(frame_graph[1][1]) +
-                                 ',' + str(frame_graph[2][0]) + '，' + str(frame_graph[2][1]) +
-                                 ',' + str(frame_graph[3][0]) + '，' + str(frame_graph[3][1]) +
+                        fp.write(str(frame_graph[0]) + ',' + str(frame_graph[1][0]) + ';' + str(frame_graph[1][1]) +
+                                 ',' + str(frame_graph[2][0]) + ';' + str(frame_graph[2][1]) +
+                                 ',' + str(frame_graph[3][0]) + ';' + str(frame_graph[3][1]) +
                                  ',' + str(index) +
                                  '\n')
                         # index += 1
@@ -172,6 +178,7 @@ def main():
         video_src = sys.argv[1]
     except:
         video_src = "sim_data"
+        # video_src = 'D:/simulation/turb'
         # video_src = "./sim2_of.avi"
         # video_src = "./sim3_of.avi"
         # video_src = "./sng_of.avi"
