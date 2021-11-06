@@ -7,43 +7,6 @@ import time
 from sim_data_iterator import SimData
 
 
-def cal_local_velocity(position, agents, radius=10):
-    """
-    calculate local density and velocity
-    :param position: position to measure:[0,0](position in modeling)
-    :param radius: radius R of measure:the bigger R,the smoothing area around position
-    :param agents: data of all agents:agent[0] is position and agent[1] is velocity
-    :return: local density and local velocity
-    """
-    local_density = 0
-    local_color = np.zeros(3)
-    for agent in agents:
-        weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
-        local_density += weight
-        local_color += weight * np.array(agent[1])
-    local_color /= local_density
-    return local_color
-
-
-def sample_points_from_render(position, vis, sample_times=20, radius=20):
-    ret = []
-    vis = np.array(vis)
-    for i in range(sample_times):
-        xi, yi = np.random.randint(-1 * radius, radius), np.random.randint(-1 * radius, radius)
-        sample_position = (position[0] + xi, position[1] + yi)
-        # if sample_position[0]>0  # 此处待加入限制
-        # print(sample_position)
-        ret.append([sample_position, vis[sample_position]])
-    # ret = [[position,vis[position]]]
-    return ret
-
-
-def local_color_from_render(position, vis, radius=10):
-    # position = (position[1],position[0])
-    agents = sample_points_from_render(position, vis, radius=2 * radius, sample_times=radius)
-    return cal_local_velocity(position, agents, radius=radius)
-
-
 class App:
     def __init__(self, video_src):
         self.cam = SimData(video_src)  # 新建一个仿真数据迭代器对象，用于读取仿真数据的渲染画面
@@ -97,13 +60,13 @@ class App:
                 self.vary = [[] for _ in range(len(posis))]
             # 对于所有的node 进行局部速度计算
             for posi in posis:
-                c = local_color_from_render(posi, frame, cal_radius)
+                c = local_color_from_render((posi[1], posi[0]), frame, cal_radius)
                 c = [int(cc) if cc > 0 else 0 for cc in c]
                 plots.append(c)
             # 局部速度可视化 同时更新 vary：存储过去一段时间的速度变化，用于计算信息熵
             for i in range(len(posis)):
                 posi = posis[i]
-                hue, sat, val = rgb_to_hsv(plots[i][0], plots[i][1], plots[i][2])
+                hue, sat, val = rgb_to_hsv(plots[i][1], plots[i][2], plots[i][0])
                 hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 即val
                 if len(self.vary[i]) < 20:  # 如果速度变化不足20个，则先不计算信息熵
                     self.vary[i].append(hue)
@@ -130,7 +93,7 @@ class App:
                         fp.write(str(self.frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1])
                                  + ',' + str(ent) + ',' + str(mutual_info) + '\n')
 
-                cv.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
+                cv.circle(frame, (posi[0], posi[1]), render_radius, plots[i], -1)
 
             # real-time frame fresh rate
             sep_time = time.time() - start_time
