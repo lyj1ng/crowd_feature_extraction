@@ -22,7 +22,8 @@ class App:
     def run(self):
         with open('./instability_graph.csv', 'w+') as fp:
             # 进行节点稳定性信息的保存
-            fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,mutual info:right\n')
+            fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,'
+                     'mutual info:right\n')
         width, height = self.cam.get(3), self.cam.get(4)
         index = -1
 
