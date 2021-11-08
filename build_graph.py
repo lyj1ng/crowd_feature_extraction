@@ -14,6 +14,9 @@ with open('instability_graph.csv', 'r') as fp:
     frame_idx = int(node[0])
     # print(frame_idx)
     upper_bound = min(upper_bound, frame_idx)
+with open('vector.csv', 'w+') as fp:
+    fp.write('frame_idx,vector_instability,,vector_speed,,,,\n')
+
 # 对所有idx进行循环读取
 last = []
 for idx in range(1, upper_bound + 1):
@@ -101,9 +104,12 @@ for idx in range(1, upper_bound + 1):
     vector_speed = local_color_from_render(input_position, np.array(wave_agent), graph_sample=True)+local_color_from_render(input_position, np.array(point_agent), graph_sample=True)+[np.sum(ats)] if nodes_info else last
     last = vector_speed
 
-    vector_speed = [round(v, 2) for v in vector_speed]
-    vector_instability = [round(v, 2) for v in vector_instability]
+    vector_speed = [str(round(v, 2)) for v in vector_speed]
+    vector_instability = [str(round(v, 2)) for v in vector_instability]
 
     sep_time = time.time() - start_time
     print('time consumption : ', round(sep_time, 3), len(nodes_info), end='\t')
     print(vector_instability, vector_speed)
+    with open('vector.csv', 'a') as fp:
+        if vector_instability:
+            fp.write(str(idx)+','+','.join(vector_instability)+','+','.join(vector_speed)+'\n')
