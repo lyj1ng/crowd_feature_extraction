@@ -15,6 +15,7 @@ with open('instability_graph.csv', 'r') as fp:
     # print(frame_idx)
     upper_bound = min(upper_bound, frame_idx)
 # 对所有idx进行循环读取
+last = []
 for idx in range(1, upper_bound + 1):
     start_time = time.time()
     nodes_info = []  # 速度传递节点
@@ -73,7 +74,7 @@ for idx in range(1, upper_bound + 1):
     #     pass
     # input()
 
-    input_position = (30, 30)
+    input_position = (35, 36)
     vector_speed = []
     vector_instability = []
     ents = []
@@ -81,22 +82,27 @@ for idx in range(1, upper_bound + 1):
     for insta_info in instability_info:
         position, ent, mi = insta_info
         # print(position,input_position)
-        if euclid_distance(position, input_position, root=True) < 10:
+        if euclid_distance(position, input_position, root=True) < 9:
             ents.append(ent)
             mis.append(mi)
     vector_instability = [np.mean(ents), np.mean(mis)] if ents else []
-    vws0, vws1 = [], []
-    vps0, vps1 = [], []
+    wave_agent = []
+    point_agent = []
     ats = []
     for node in nodes_info:
         position, vpoint, vwave, attribute = node
-        if euclid_distance(position, input_position, root=True) < 100:
-            vws0.append(vwave[0])
-            vws1.append(vwave[1])
-            vps0.append(vpoint[0])
-            vps1.append(vpoint[1])
+        wave_agent.append([position, vwave])
+        point_agent.append([position, [v/255 for v in vpoint]])
+        if euclid_distance(position, input_position, root=True) < 10:
             ats.append(attribute)
-    vector_speed = [np.mean(vws0), np.mean(vws1), np.mean(vps0)/200, np.mean(vps1)/200, np.sum(ats)] if vws0 else []
+        else:
+            ats.append(attribute / 10)
+
+    vector_speed = local_color_from_render(input_position, np.array(wave_agent), graph_sample=True)+local_color_from_render(input_position, np.array(point_agent), graph_sample=True)+[np.sum(ats)] if nodes_info else last
+    last = vector_speed
+
+    vector_speed = [round(v, 2) for v in vector_speed]
+    vector_instability = [round(v, 2) for v in vector_instability]
 
     sep_time = time.time() - start_time
     print('time consumption : ', round(sep_time, 3), len(nodes_info), end='\t')

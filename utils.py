@@ -2,7 +2,7 @@ import numpy as np
 import cmath, math
 
 
-def cal_local_velocity(position, agents, radius=10):
+def cal_local_velocity(position, agents, radius=10, graph_sample=False):
     """
     calculate local density and velocity
     :param position: position to measure:[0,0](position in modeling)
@@ -11,12 +11,14 @@ def cal_local_velocity(position, agents, radius=10):
     :return: local density and local velocity
     """
     local_density = 0
-    local_color = np.zeros(3)
+    local_color = np.zeros(3) if not graph_sample else np.zeros(2)
     for agent in agents:
         weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
         local_density += weight
         local_color += weight * np.array(agent[1])
     local_color /= local_density
+    if graph_sample:
+        local_color = list(local_color)
     return local_color
 
 
@@ -33,16 +35,31 @@ def sample_points_from_render(position, vis, sample_times=20, radius=20):
     return ret
 
 
-def local_color_from_render(position, vis, radius=10):
+# def sample_nodes_from_graph(position, vis, sample_times=20, radius=20):
+#     ret = []
+#     vis = np.array(vis)
+#     for i in range(sample_times):
+#         xi, yi = np.random.randint(-1 * radius, radius), np.random.randint(-1 * radius, radius)
+#         sample_position = (position[0] + xi, position[1] + yi)
+#         ret.append([sample_position, vis[sample_position]])
+#     # ret = [[position,vis[position]]]
+#     return ret
+
+
+def local_color_from_render(position, vis, radius=10, graph_sample=False):
     """
     通过rgb帧vis，计算局部加权颜色
+    :param graph_sample: 为graph提取特征所使用时，不进行sample，而是取所有节点作为sample
     :param position: 形如（y，x） 其中y取自width ，x取自height
     :param vis: rgb帧
     :param radius: 计算半径
     :return:返回加权颜色
     """
-    agents = sample_points_from_render(position, vis, radius=2 * radius, sample_times=radius)
-    return cal_local_velocity(position, agents, radius=radius)
+    if not graph_sample:
+        agents = sample_points_from_render(position, vis, radius=2 * radius, sample_times=radius)
+    else:
+        agents = vis
+    return cal_local_velocity(position, agents, radius=radius, graph_sample=graph_sample)
 
 
 def bit_product_sum(x, y):
@@ -150,7 +167,6 @@ def constrain_max_velocity(velo=[0, 0], threshold=1000):
     :param threshold: 速度限制
     :return: 如果速度在速度限制内则返回 TRUE
     """
-    # velo = list(velo)
     abs_v = 0
     for v in velo:
         abs_v += abs(v)
@@ -179,7 +195,6 @@ def calc_condition_ent(x, y):
     """
         calculate ent H(y|x)
     """
-
     # calc ent(y|x)
     x_value_list = set([x[i] for i in range(x.shape[0])])
     ent = 0.0
@@ -195,7 +210,6 @@ def calc_ent_grap(x, y):
     """
         calculate ent grap
     """
-
     base_ent = calc_ent(y)
     condition_ent = calc_condition_ent(x, y)
     ent_grap = base_ent - condition_ent
