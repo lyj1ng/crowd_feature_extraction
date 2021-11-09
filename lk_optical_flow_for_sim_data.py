@@ -98,14 +98,14 @@ class App:
                     if len(tr) > self.track_len:
                         del tr[0]
                     try:
-                        bgr_vector = vis[np.int32(y)][np.int32(x)]  # 获得了追踪点所代表的颜色 ,BGR通道
+                        # bgr_vector = vis[np.int32(y)][np.int32(x)]  # 获得了追踪点所代表的颜色 ,BGR通道
                         bgr_vector = local_color_from_render((np.int32(y), np.int32(x)), vis, radius=5)
                     except:
                         continue  # 对于超出图像范围的追踪点 进行舍弃
 
-                    if not constrain_max_velocity(np.array(tr[-1]) - np.array(tr[-2]), threshold=800):
-                        # continue  # 相当于是对 V wave 进行了限制
-                        pass   # 我又不限制了
+                    if not constrain_max_velocity(np.array(tr[-1]) - np.array(tr[-2]), threshold=30):
+                        continue  # 相当于是对 V wave 进行了限制
+                        # pass   # 我又不限制了
                     # print(np.array(tr[-1]) - np.array(tr[-2]))
 
                     red_vector, green_vector, blue_vector = (1, 0), (-0.5, 0.866), (-0.5, -0.866)
@@ -113,10 +113,11 @@ class App:
                                      bgr_vector[2] * np.array(red_vector)
                     velocity_point = [round(v, 2) for v in velocity_point]
                     velocity_wave = np.array(tr[-1]) - np.array(tr[0])
-                    velocity_wave = [round(v, 2) for v in velocity_wave]
+                    velocity_wave = [round(v/self.track_len, 2) for v in velocity_wave]
                     # print(velocity_wave, velocity_point)
                     cos_wave = cosine_similarity(velocity_wave, velocity_point)
-                    if constrain_max_velocity(velocity_wave, threshold=10):  # 首先筛选稳定节点
+
+                    if euclid_distance(velocity_wave, [0, 0]) < 10:  # 首先筛选稳定节点
                         self.stable_nodes.append(velocity_wave)
                         nodes.append(0)
 
@@ -167,7 +168,7 @@ class App:
             # cv.resizeWindow('lk_track', 640, 480)
             cv.imshow('lk_track', vis)
             # cv.imshow('lk_track', result)
-            ch = cv.waitKey(100)
+            ch = cv.waitKey(10)
             if ch == ord(' '):  # quit
                 break
 

@@ -66,7 +66,7 @@ def show_sim_data(folder='sim_data', output=False):
         out = cv2.VideoWriter('./sim_demo.avi', fourcc, 10,
                               (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
     velocity_data = []
-    for frame_indx in range(10, 1210):  # 控制读几帧画面
+    for frame_indx in range(1120, 3200):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             for line in fp.readlines()[3:-2]:  # 读取xml内容
@@ -100,9 +100,9 @@ def show_sim_data(folder='sim_data', output=False):
             print('(', frame_indx, end=' frame)\t')
             # test point : *Configuration*
             # position_to_test = [15, -31.5]  # 出口层的一个入口
-            # position_to_test = [12, -17]  # 出口层的内侧
+            position_to_test = [12, -17]  # 出口层的内侧
             # position_to_test = [11, -25]  # crowd but laminar first and laminar last
-            position_to_test = [13.5, -31.1]  # 交替
+            # position_to_test = [13.5, -31.1]  # 交替
             # position_to_test = [8.5, -25.8]  # 3300frame左右
             # position_to_test = [12, -17]
             # position_to_test = [17.5, -20]  # 出口层的一个出口
@@ -192,5 +192,6 @@ def show_sim_data(folder='sim_data', output=False):
 
 if __name__ == '__main__':
     # show_sim_data(folder='bad_situation', output=False)
-    show_sim_data(folder='D:/simulation/congestion', output=False)
+    # show_sim_data(folder='D:/simulation/congestion', output=False)
+    show_sim_data(folder='D:/simulation/turb', output=False)
     # show_sim_data()
