@@ -54,54 +54,57 @@ for idx in range(1, upper_bound + 1):
             instability_info.append([position, ent, mi])
     # 以上得到的是这一帧中的全部信息：速度传递信息 nodes_info 与稳定性信息 insta_info
 
-    graph = np.full((len(nodes), len(nodes)), None)  # edge infomation
-    for i in range(len(nodes_info)):
-        for j in range(i + 1, len(nodes_info)):
-            n1 = nodes_info[i]
-            n2 = nodes_info[j]
-            if euclid_distance(n1[0], n2[0], root=True) > 10 * 5:
-                graph[i, j] = None
-            else:
-                vp_dis = cosine_similarity(n1[1], n2[1])
-                v1 = cosine_similarity(n1[1], n2[0] - n1[0])
-                v2 = cosine_similarity(n2[1], n1[0] - n2[0])
-                graph[i, j] = vp_dis - v1 * v2
-                graph[i, j] = round(graph[i, j], 2)
-    # 以上是对nodes info的边的计算
-
+    # graph = np.full((len(nodes), len(nodes)), None)  # edge infomation
     # for i in range(len(nodes_info)):
-    #     for j in range(len(nodes_info)):
-    #         print(graph[i, j], end='  ')
-    #         pass
-    #     print()
-    #     pass
-    # input()
+    #     for j in range(i + 1, len(nodes_info)):
+    #         n1 = nodes_info[i]
+    #         n2 = nodes_info[j]
+    #         if euclid_distance(n1[0], n2[0], root=True) > 10 * 5:
+    #             graph[i, j] = None
+    #         else:
+    #             vp_dis = cosine_similarity(n1[1], n2[1])
+    #             v1 = cosine_similarity(n1[1], n2[0] - n1[0])
+    #             v2 = cosine_similarity(n2[1], n1[0] - n2[0])
+    #             graph[i, j] = vp_dis - v1 * v2
+    #             graph[i, j] = round(graph[i, j], 2)
+    # 以上是对nodes info的边的计算
 
     input_position = (35, 36)
     vector_speed = []
     vector_instability = []
-    ents = []
-    mis = []
+    ents, ents2, ents3 = [], [], []
+    mis, mis2 = [], []
     for insta_info in instability_info:
         position, ent, mi = insta_info
         # print(position,input_position)
-        if euclid_distance(position, input_position, root=True) < 9:
+        dis = euclid_distance(position, input_position, root=True)
+        if dis < 9:
             ents.append(ent)
             mis.append(mi)
-    vector_instability = [np.mean(ents), np.mean(mis)] if ents else []
+        elif dis < 18:
+            ents2.append(ent)
+            mis2.append(mi)
+        elif dis < 36:
+            ents3.append(ent)
+    vector_instability = [np.mean(ents), np.mean(mis), np.mean(ents2), np.mean(mis2), np.mean(ents3)] if ents else []
+
     wave_agent = []
     point_agent = []
     ats = []
     for node in nodes_info:
         position, vpoint, vwave, attribute = node
         wave_agent.append([position, vwave])
-        point_agent.append([position, [v/255 for v in vpoint]])
+        point_agent.append([position, [v / 255 for v in vpoint]])
         if euclid_distance(position, input_position, root=True) < 10:
             ats.append(attribute)
         else:
             ats.append(attribute / 10)
 
-    vector_speed = local_color_from_render(input_position, np.array(wave_agent), graph_sample=True)+local_color_from_render(input_position, np.array(point_agent), graph_sample=True)+[np.sum(ats)] if nodes_info else last
+    vector_speed = local_color_from_render(input_position, np.array(wave_agent),
+                                           graph_sample=True) + local_color_from_render(input_position,
+                                                                                        np.array(point_agent),
+                                                                                        graph_sample=True) + [
+                       np.sum(ats)] if nodes_info else last
     last = vector_speed
 
     vector_speed = [str(round(v, 2)) for v in vector_speed]
@@ -112,4 +115,4 @@ for idx in range(1, upper_bound + 1):
     print(vector_instability, vector_speed)
     with open('vector.csv', 'a') as fp:
         if vector_instability:
-            fp.write(str(idx)+','+','.join(vector_instability)+','+','.join(vector_speed)+'\n')
+            fp.write(str(idx) + ',' + ','.join(vector_instability) + ',' + ','.join(vector_speed) + '\n')
