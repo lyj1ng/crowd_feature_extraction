@@ -11,7 +11,7 @@ class App:
     def __init__(self, video_src):
         self.cam = SimData(video_src)  # 新建一个仿真数据迭代器对象，用于读取仿真数据的渲染画面
         # 对仿真迭代器的参数进行调整
-        self.cam.set('size', (10, 10))
+        self.cam.set('size', (40, 70))
         self.cam.set('zoom', 20)
 
         width, height = self.cam.get(3), self.cam.get(4)
@@ -61,7 +61,7 @@ class App:
                 self.vary = [[] for _ in range(len(posis))]
             # 对于所有的node 进行局部速度计算
             for posi in posis:
-                c = local_color_from_render((posi[1], posi[0]), frame, cal_radius)
+                c = local_color_from_render((posi[0], posi[1]), frame, cal_radius)
                 c = [int(cc) if cc > 0 else 0 for cc in c]
                 plots.append(c)
             # 局部速度可视化 同时更新 vary：存储过去一段时间的速度变化，用于计算信息熵
@@ -116,6 +116,7 @@ def main():
         video_src = sys.argv[1]
     except:
         video_src = "sim_data"
+        video_src = 'D:/simulation/turb'
         # video_src = "./sim2_of.avi"
         # video_src = "./sim3_of.avi"
         # video_src = "./sng_of.avi"

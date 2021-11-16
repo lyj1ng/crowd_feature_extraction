@@ -15,7 +15,7 @@ class SimData:
 
     def __init__(self, sim_src):
         self.folder = sim_src
-        self.start_idx, self.end_idx = 200, 900
+        self.start_idx, self.end_idx = 10, 3000
         self.zoom_in = 25
         self.record_size = (10, 10)
         self.human_radius = 0.28

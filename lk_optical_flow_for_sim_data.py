@@ -43,7 +43,7 @@ class App:
         self.tracks = []
         self.stable_nodes = []
         self.cam = SimData(video_src)
-        self.cam.set('size', (10, 10))
+        self.cam.set('size', (40, 70))
         self.cam.set('zoom', 20)
         width, height = self.cam.get(3), self.cam.get(4)
         print('video size  : ', width, height)
@@ -178,8 +178,8 @@ def main():
     try:
         video_src = sys.argv[1]
     except:
-        video_src = "sim_data"
-        # video_src = 'D:/simulation/turb'
+        # video_src = "sim_data"
+        video_src = 'D:/simulation/turb'
         # video_src = "./sim2_of.avi"
         # video_src = "./sim3_of.avi"
         # video_src = "./sng_of.avi"
