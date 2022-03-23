@@ -24,7 +24,7 @@ out = cv2.VideoWriter('./output.avi', fourcc, 10, (int(width), int(height)))
 out2 = cv2.VideoWriter('./demo.avi', fourcc, 10, (int(width) * 2, int(height)))
 
 index = -1
-while (1):
+while True:
 
     ret, frame2 = cap.read()
     if not ret:
@@ -54,7 +54,7 @@ while (1):
     #                                                                      iterations 对每层金字塔的迭代次数
     #                                                                          poly_n 每个像素中找到多项式展开的邻域像素的大小。越大越光滑，也越稳定
     #                                                                              poly_sigma 高斯标准差，用来平滑倒数
-    #                                                                                 flags 光流的方式，有OPTFLOW_USE_INITIAL_FLOW 和OPTFLOW_FARNEBACK_GAUSSIAN 两种
+    #                                                                                 flags 光流方式，如FARNEBACK_GAUSSIAN
 
     # print(flow.shape)
     # print(flow)

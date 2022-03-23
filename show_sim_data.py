@@ -191,7 +191,7 @@ def show_sim_data(folder='sim_data', output=False):
 
 
 if __name__ == '__main__':
-    # show_sim_data(folder='bad_situation', output=False)
+    show_sim_data(folder='bad_situation', output=False)
     # show_sim_data(folder='D:/simulation/congestion', output=False)
-    show_sim_data(folder='D:/simulation/turb', output=False)
+    # show_sim_data(folder='D:/simulation/turb', output=False)
     # show_sim_data()

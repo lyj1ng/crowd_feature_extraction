@@ -5,24 +5,35 @@ import cmath, math
 def cal_local_velocity(position, agents, radius=10, graph_sample=False):
     """
     calculate local density and velocity
+    :param graph_sample:
     :param position: position to measure:[0,0](position in modeling)
     :param radius: radius R of measure:the bigger R,the smoothing area around position
     :param agents: data of all agents:agent[0] is position and agent[1] is velocity
     :return: local density and local velocity
     """
-    local_density = 0
-    local_color = np.zeros(3) if not graph_sample else np.zeros(2)
-    for agent in agents:
-        weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
-        local_density += weight
-        local_color += weight * np.array(agent[1])
-    local_color /= local_density
-    if graph_sample:
-        local_color = list(local_color)
-    return local_color
+    if not graph_sample:
+        local_density = 0
+        local_color = np.zeros(3)
+        for agent in agents:
+            weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
+            local_density += weight
+            local_color += weight * np.array(agent[1])
+        local_color /= local_density
+        return local_color
+    else:
+        local_density = 0
+        local_color = np.zeros(3)  # if not graph_sample else np.zeros(2)
+        for agent in agents:
+            weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
+            local_density += weight
+            local_color += weight * np.array(agent[1])
+        local_color /= local_density
+        return local_color
 
 
-def sample_points_from_render(position, vis, sample_times=20, radius=20):
+def sample_points_from_render(position, vis, width,height,sample_times=1, radius=20):
+    # sample_positions = []
+    # new_vis = []
     ret = []
     vis = np.array(vis)
     for i in range(sample_times):
@@ -30,7 +41,10 @@ def sample_points_from_render(position, vis, sample_times=20, radius=20):
         sample_position = (position[0] + xi, position[1] + yi)
         # if sample_position[0]>0  # 此处待加入限制
         # print(sample_position)
-        ret.append([sample_position, vis[sample_position]])
+        # sample_positions.append(sample_position)
+        # new_vis.append(vis[sample_position])
+        if 0 <= sample_position[0] < width and 0 <= sample_position[1] < height:
+            ret.append([sample_position, vis[sample_position]])
     # ret = [[position,vis[position]]]
     return ret
 
@@ -55,8 +69,9 @@ def local_color_from_render(position, vis, radius=10, graph_sample=False):
     :param radius: 计算半径
     :return:返回加权颜色
     """
+    # print(vis.shape)
     if not graph_sample:
-        agents = sample_points_from_render(position, vis, radius=2 * radius, sample_times=radius)
+        agents = sample_points_from_render(position, vis,vis.shape[0],vis.shape[1], radius=2 * radius, sample_times=radius)
     else:
         agents = vis
     return cal_local_velocity(position, agents, radius=radius, graph_sample=graph_sample)
