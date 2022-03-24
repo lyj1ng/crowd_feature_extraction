@@ -25,8 +25,8 @@ with open('./instability_graph_from_video.csv', 'w+') as fp:
     fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,'
              'mutual info:right\n')
 # 初始化
-render_radius = 5
-cal_radius = 5
+render_radius = 250
+cal_radius = 250
 axis_i = list(range(cal_radius, height - cal_radius, cal_radius * 2))
 axis_j = list(range(cal_radius, width - cal_radius, cal_radius * 2))
 # 所有点位的x，y轴位置
@@ -67,71 +67,72 @@ while True:
 
     rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     # print(index)
-    if index > 100:
+    if False:
         break
     else:
-        if True:
-            frame = rgb
+        frame = rgb
 
-            filter_kernel = 15
-            frame = cv2.blur(frame, (filter_kernel, filter_kernel))  # 对画面进行 均值滤波
-            # 一些参数：渲染半径 与 速度计算半径
+        filter_kernel = 15
+        frame = cv2.blur(frame, (filter_kernel, filter_kernel))  # 对画面进行 均值滤波
+        # 一些参数：渲染半径 与 速度计算半径
 
-            plots = []  # 存储所有node的即时local color
-            if not vary:  # 第一次进行vary的初始化
-                vary = [[] for _ in range(len(posis))]
-            # 对于所有的node 进行局部速度计算
-            for posi in posis:
-                # print(posi,index)
-                c = local_color_from_render((posi[0], posi[1]), frame, cal_radius,graph_sample=True)
-                c = [int(cc) if cc > 0 else 0 for cc in c]
-                plots.append(c)
-            # print(plots)
-            # 局部速度可视化 同时更新 vary：存储过去一段时间的速度变化，用于计算信息熵
-            for i in range(len(posis)):
-                # print(i)
-                posi = posis[i]
-                hue, sat, val = rgb_to_hsv(plots[i][1], plots[i][2], plots[i][0])
-                hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 即val
-                if len(vary[i]) < 20:  # 如果速度变化不足20个，则先不计算信息熵
-                    vary[i].append(hue)
-                else:
-                    # 数组的拼接
-                    vary[i] = vary[i][1:] + [hue]
-                    # 计算信息熵
-                    ent = calc_ent(np.array(vary[i]))
-                    # 计算互信息：上下左右
-                    mutual_info = []
-                    for neighbor in [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0],
-                                     [2 * cal_radius, 0]]:
-                        neighbor_position = np.array(posi) + np.array(neighbor)
-                        neighbor_position = [str(p) for p in neighbor_position]
-                        neighbor_position = ';'.join(neighbor_position)
-                        # print(neighbor_position,position_map)
-                        if neighbor_position in position_map:
-                            n_vary = np.array(vary[position_map[neighbor_position]])
-                            mutual_info.append(calc_ent_grap(np.array(vary[i]), n_vary))
-                        else:
-                            mutual_info.append(None)
+        plots = []  # 存储所有node的即时local color
+        if not vary:  # 第一次进行vary的初始化
+            vary = [[] for _ in range(len(posis))]
+        # 对于所有的node 进行局部速度计算
+        ###  此处需要优化：对每个位置遍历复杂度太高了
+        ###  应该对每个rgb遍历，分配给每个位置，最后对每个位置求weighted average
+        for posi in posis:
+            # print(posi,index)
+            c = local_color_from_render((posi[0], posi[1]), frame, cal_radius,graph_sample=False)
+            c = [int(cc) if cc > 0 else 0 for cc in c]
+            plots.append(c)
+        # print(plots)
+        # 局部速度可视化 同时更新 vary：存储过去一段时间的速度变化，用于计算信息熵
+        for i in range(len(posis)):
+            # print(i)
+            posi = posis[i]
+            hue, sat, val = rgb_to_hsv(plots[i][1], plots[i][2], plots[i][0])
+            hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 即val
+            if len(vary[i]) < 20:  # 如果速度变化不足20个，则先不计算信息熵
+                vary[i].append(hue)
+            else:
+                # 数组的拼接
+                vary[i] = vary[i][1:] + [hue]
+                # 计算信息熵
+                ent = calc_ent(np.array(vary[i]))
+                # 计算互信息：上下左右
+                mutual_info = []
+                for neighbor in [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0],
+                                 [2 * cal_radius, 0]]:
+                    neighbor_position = np.array(posi) + np.array(neighbor)
+                    neighbor_position = [str(p) for p in neighbor_position]
+                    neighbor_position = ';'.join(neighbor_position)
+                    # print(neighbor_position,position_map)
+                    if neighbor_position in position_map:
+                        n_vary = np.array(vary[position_map[neighbor_position]])
+                        mutual_info.append(calc_ent_grap(np.array(vary[i]), n_vary))
+                    else:
+                        mutual_info.append(None)
 
-                    with open('./instability_graph_from_video.csv', 'a+') as fp:
-                        fp.write(str(frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1])
-                                 + ',' + str(ent) + ',' + str(mutual_info) + '\n')
+                with open('./instability_graph_from_video.csv', 'a+') as fp:
+                    fp.write(str(frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1])
+                             + ',' + str(ent) + ',' + str(mutual_info) + '\n')
 
-                cv2.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
+            cv2.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
 
-            # real-time frame fresh rate
-            sep_time = time.time() - start_time
-            fr = round(1 / sep_time, 1) if sep_time else 'inf'
-            print('\rframe_rate : ', fr, end=' fps ')
+        # real-time frame fresh rate
+        sep_time = time.time() - start_time
+        fr = round(1 / sep_time, 1) if sep_time else 'inf'
+        print('\rframe_rate : ', fr, end=' fps ')
 
-            frame_idx += 1
+        frame_idx += 1
 
-            cv2.namedWindow('lk_track', 0)
-            cv2.imshow('lk_track', frame)
-            ch = cv2.waitKey(3)
-            if ch == ord(' '):  # quit
-                break
+        cv2.namedWindow('lk_track', 0)
+        cv2.imshow('lk_track', frame)
+        ch = cv2.waitKey(3)
+        if ch == ord(' '):  # quit
+            break
 
     sep_time = time.time() - start_time
     print('\rframe_rate : ', round(1 / sep_time, 1), end=' fps ' + '.' * (index // 3 % 4) + ' ' * 10)

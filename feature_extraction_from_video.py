@@ -37,14 +37,16 @@ frame_idx = 0
 
 index = -1
 while True:
+    start_time = time.time()
+
     ret, frame2 = cap.read()
     if not ret:
         print('\n\'\'\'End of File\'\'\'\n')
         break
     index += 1
-    if index % 3 != 0:  # 每 N 帧计算一次瞬时速度
+    if index % 2 != 0:  # 每 N 帧计算一次瞬时速度
         continue
-    start_time = time.time()
+
     next_frame = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
 
     flow = cv2.calcOpticalFlowFarneback(prvs, next_frame, None, 0.5, 3, 15, 3, 7, 1.5, 0)
@@ -61,16 +63,12 @@ while True:
     rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
     # print(rgb[0][0])
-    if index > 100:
-        break
-    elif index == 1:
+    if index == 1:
         prev_gray = rgb
     else:
         frame = rgb
-        if index % 6 != 0:
-            pass
+        # if index % 6 != 0:
             # continue
-        # start_time = time.time()
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # 均值滤波
         filter_kernel = 2
@@ -165,7 +163,6 @@ while True:
 
     sep_time = time.time() - start_time
     print('\rframe_rate : ', round(1 / sep_time, 1), end=' fps ' + '.' * (index // 3 % 4) + ' ' * 10)
-
 
     prvs = next_frame
 
