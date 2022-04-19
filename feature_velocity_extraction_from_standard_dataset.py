@@ -6,10 +6,19 @@ from utils import *
 from utils import cosine_similarity, constrain_max_velocity
 
 print('\ncv2 status : ', cv2.useOptimized())
+
 # folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\training\\03\\'
 # save_folder = 'graph_save\\03\\'
-folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\testing\\01\\'
-save_folder = 'graph_save\\test01\\'
+
+folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\testing\\02\\'
+save_folder = 'graph_save\\test02\\'
+
+# folder = 'C:\\Users\\forev\\Documents\\PycharmProjects\\MNAD-master\\dataset\\umn\\training\\frames\\02\\'
+# save_folder = 'graph_save\\umn\\02\\'
+
+# folder = 'C:\\Users\\forev\\Documents\\PycharmProjects\\MNAD-master\\dataset\\umn\\testing\\frames\\02\\'
+# save_folder = 'graph_save\\umn\\test02\\'
+
 # cap = cv2.VideoCapture('./stopandgo.mp4')
 frame_index = 0
 # 获取第一帧
@@ -31,7 +40,9 @@ with open('./instability_graph_from_video.csv', 'w+') as fp:
     fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,'
              'mutual info:right\n')
 # 初始化
-render_radius = 25
+# 半径设置 2022-04-19 lp:25-25
+#                   umn: 10-10
+render_radius = 25  #
 cal_radius = 25
 axis_i = list(range(cal_radius, height - cal_radius, cal_radius * 2))
 axis_j = list(range(cal_radius, width - cal_radius, cal_radius * 2))
