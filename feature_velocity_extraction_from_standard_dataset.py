@@ -7,6 +7,7 @@ from utils import cosine_similarity, constrain_max_velocity
 
 print('\ncv2 status : ', cv2.useOptimized())
 folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\training\\01\\'
+save_folder = 'graph_save\\'
 # cap = cv2.VideoCapture('./stopandgo.mp4')
 frame_index = 0
 # 获取第一帧
@@ -46,10 +47,16 @@ for i in axis_i:
 # frame_idx = 0
 vary = None
 index = -1
+visualize = False
+oldFasion = False
 while True:
     try:
         frame2 = cv2.imread(folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + ".jpg")
         frame_index += 1
+
+        node_feature = [[] for _ in range(node_index)]
+        adj = [[0 for ii in range(node_index)] for jj in range(node_index)]
+
     except:
         print('\n\'\'\'End of File\'\'\'\n')
         break
@@ -73,9 +80,7 @@ while True:
 
     rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     # print(index)
-    if False:
-        break
-    else:
+    if True:
         frame = rgb
 
         filter_kernel = 15
@@ -109,6 +114,10 @@ while True:
                 ent = calc_ent(np.array(vary[i]))
                 # 计算互信息：上下左右
                 mutual_info = []
+
+                this_position = [str(p) for p in np.array(posi)]
+                this_position = ';'.join(this_position)
+                this_index = position_map[this_position]
                 for neighbor in [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0],
                                  [2 * cal_radius, 0]]:
                     neighbor_position = np.array(posi) + np.array(neighbor)
@@ -117,16 +126,42 @@ while True:
                     # print(neighbor_position,position_map)
                     if neighbor_position in position_map:
                         n_vary = np.array(vary[position_map[neighbor_position]])
-                        mutual_info.append(calc_ent_grap(np.array(vary[i]), n_vary))
-                    else:
+                        mi = calc_ent_grap(np.array(vary[i]), n_vary)
+                        adj[this_index][position_map[neighbor_position]] = mi
+                        if oldFasion:
+                            mutual_info.append(mi)
+                    elif oldFasion:
                         mutual_info.append(None)
+                # 存这个点位的信息
+                ent_vec = [0] * 15
+                if ent < 1:
+                    # 0到1之间的ent，占据前8个vec
+                    ent_vec[int(ent*8)] = 1
+                elif ent < 3:
+                    # 1-3之间的ent，占据后5个vec
+                    ent_vec[int(3*(ent-1))] = 1
+                elif ent < 4:
+                    ent_vec[-2] = 1
+                else:
+                    ent_vec[-1] = 1
 
-                with open('./instability_graph_from_video.csv', 'a+') as fp:
-                    fp.write(
-                        '0' * (5 - len(str(frame_index))) + str(frame_index) + ',' + str(posi[0]) + ';' + str(posi[1])
-                        + ',' + str(ent) + ',' + str(mutual_info) + '\n')
+                node_feature[this_index] = ent_vec[:]
+                if oldFasion:
+                    with open('./instability_graph_from_video.csv', 'a+') as fp:
+                        fp.write(
+                            '0' * (5 - len(str(frame_index))) + str(frame_index) + ',' + str(posi[0]) + ';' + str(posi[1])
+                            + ',' + str(ent) + ',' + str(mutual_info) + '\n')
+            if visualize:
+                cv2.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
 
-            cv2.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
+        if node_feature[0]:
+            adj = np.array(adj)
+            node_feature = np.array(node_feature)
+            # print(adj)
+            # print(node_feature)
+            # input()
+            # np.save(save_folder+'0' * (5 - len(str(frame_index))) + str(frame_index)+'.npy', adj)
+            np.savez(save_folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + '.npz', f=node_feature, a=adj)
 
         # real-time frame fresh rate
         sep_time = time.time() - start_time
@@ -134,18 +169,17 @@ while True:
         print('\rframe_rate : ', fr, end=' fps ')
 
         # frame_idx += 1
-
-        cv2.namedWindow('lk_track', 0)
-        cv2.imshow('lk_track', frame)
-        ch = cv2.waitKey(3)
-        if ch == ord(' '):  # quit
-            break
+        if visualize:
+            cv2.namedWindow('lk_track', 0)
+            cv2.imshow('lk_track', frame)
+            ch = cv2.waitKey(3)
+            if ch == ord(' '):  # quit
+                break
 
     sep_time = time.time() - start_time
     print('\rframe_rate : ', round(1 / sep_time, 1), end=' fps ' + '.' * (index // 3 % 4) + ' ' * 10)
 
     prvs = next_frame
 
-cap.release()
-
-cv2.destroyAllWindows()
+if visualize:
+    cv2.destroyAllWindows()
