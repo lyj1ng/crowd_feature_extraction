@@ -62,7 +62,7 @@ while True:
 
     rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
-    # print(rgb[0][0])
+    # 至此需要用的是光流场的rgb
     if index == 1:
         prev_gray = rgb
     else:

@@ -6,17 +6,20 @@ from utils import *
 from utils import cosine_similarity, constrain_max_velocity
 
 print('\ncv2 status : ', cv2.useOptimized())
-
-cap = cv2.VideoCapture('./stopandgo.mp4')
-
+folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\training\\01\\'
+# cap = cv2.VideoCapture('./stopandgo.mp4')
+frame_index = 0
 # 获取第一帧
-ret, frame1 = cap.read()
+frame1 = cv2.imread(folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + ".jpg")
+frame_index += 1
+
 prvs = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 hsv = np.zeros_like(frame1)
 print(hsv.dtype)
+print(frame1.shape)
 # 遍历每一行的第1列
 hsv[..., 1] = 255
-width, height = cap.get(3), cap.get(4)
+width, height = frame1.shape[1], frame1.shape[0]
 width, height = int(width), int(height)
 # height,width = int(width), int(height)
 print('video size  : ', width, height)
@@ -40,14 +43,17 @@ for i in axis_i:
         position_map[str(i) + ';' + str(j)] = node_index
         node_index += 1
 
-frame_idx = 0
+# frame_idx = 0
 vary = None
 index = -1
 while True:
-    ret, frame2 = cap.read()
-    if not ret:
+    try:
+        frame2 = cv2.imread(folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + ".jpg")
+        frame_index += 1
+    except:
         print('\n\'\'\'End of File\'\'\'\n')
         break
+
     index += 1
     if index % 3 != 0:  # 每 N 帧计算一次瞬时速度
         continue
@@ -116,8 +122,9 @@ while True:
                         mutual_info.append(None)
 
                 with open('./instability_graph_from_video.csv', 'a+') as fp:
-                    fp.write(str(frame_idx) + ',' + str(posi[0]) + ';' + str(posi[1])
-                             + ',' + str(ent) + ',' + str(mutual_info) + '\n')
+                    fp.write(
+                        '0' * (5 - len(str(frame_index))) + str(frame_index) + ',' + str(posi[0]) + ';' + str(posi[1])
+                        + ',' + str(ent) + ',' + str(mutual_info) + '\n')
 
             cv2.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
 
@@ -126,7 +133,7 @@ while True:
         fr = round(1 / sep_time, 1) if sep_time else 'inf'
         print('\rframe_rate : ', fr, end=' fps ')
 
-        frame_idx += 1
+        # frame_idx += 1
 
         cv2.namedWindow('lk_track', 0)
         cv2.imshow('lk_track', frame)
