@@ -6,8 +6,10 @@ from utils import *
 from utils import cosine_similarity, constrain_max_velocity
 
 print('\ncv2 status : ', cv2.useOptimized())
-folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\training\\01\\'
-save_folder = 'graph_save\\'
+# folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\training\\03\\'
+# save_folder = 'graph_save\\03\\'
+folder = 'D:\\simulation\\loveparade\\dataset\\scene1\\testing\\01\\'
+save_folder = 'graph_save\\test01\\'
 # cap = cv2.VideoCapture('./stopandgo.mp4')
 frame_index = 0
 # 获取第一帧
@@ -140,6 +142,7 @@ while True:
                 elif ent < 3:
                     # 1-3之间的ent，占据后5个vec
                     ent_vec[int(3*(ent-1))] = 1
+                # 最后两个记录大ent
                 elif ent < 4:
                     ent_vec[-2] = 1
                 else:
