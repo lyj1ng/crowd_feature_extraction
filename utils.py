@@ -2,7 +2,7 @@ import numpy as np
 import cmath, math
 
 
-def cal_local_velocity(position, agents, radius=10, graph_sample=False):
+def cal_local_velocity(position, agents, radius=10, graph_sample=False, return_entropy=False):
     """
     calculate local density and velocity
     :param graph_sample:
@@ -12,14 +12,36 @@ def cal_local_velocity(position, agents, radius=10, graph_sample=False):
     :return: local density and local velocity
     """
     if not graph_sample:
-        local_density = 0
-        local_color = np.zeros(3)
-        for agent in agents:
-            weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
-            local_density += weight
-            local_color += weight * np.array(agent[1])
-        local_color /= local_density
-        return local_color
+        if not return_entropy:
+            local_density = 0
+            local_color = np.zeros(3)
+            for agent in agents:
+                weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
+                local_density += weight
+                local_color += weight * np.array(agent[1])
+            local_color /= local_density
+            return local_color
+        else:
+            local_density = 0
+            local_color = np.zeros(3)
+            hues = []
+            for agent in agents:
+                weight = np.exp(-1 * euclid_distance(agent[0], position, root=False) / (radius ** 2))
+                local_density += weight
+                local_color += weight * np.array(agent[1])
+
+                r, g, b = agent[1]
+                hue, sat, val = rgb_to_hsv(r, g, b)
+
+                if val > 10:
+                    hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 即val
+                    hues.append(hue)
+            local_color /= local_density
+            if len(hues) > 2:
+                ent = calc_ent(np.array(hues))
+            else:
+                ent = 0
+            return local_color, ent
     else:
         local_density = 0
         local_color = np.zeros(3)  # if not graph_sample else np.zeros(2)
@@ -31,7 +53,7 @@ def cal_local_velocity(position, agents, radius=10, graph_sample=False):
         return local_color
 
 
-def sample_points_from_render(position, vis, width,height,sample_times=1, radius=20):
+def sample_points_from_render(position, vis, width, height, sample_times=1, radius=20):
     # sample_positions = []
     # new_vis = []
     ret = []
@@ -60,7 +82,7 @@ def sample_points_from_render(position, vis, width,height,sample_times=1, radius
 #     return ret
 
 
-def local_color_from_render(position, vis, radius=10, graph_sample=False):
+def local_color_from_render(position, vis, radius=10, graph_sample=False, return_entropy=False):
     """
     通过rgb帧vis，计算局部加权颜色
     :param graph_sample: 为graph提取特征所使用时，不进行sample，而是取所有节点作为sample
@@ -71,10 +93,11 @@ def local_color_from_render(position, vis, radius=10, graph_sample=False):
     """
     # print(vis.shape)
     if not graph_sample:
-        agents = sample_points_from_render(position, vis,vis.shape[0],vis.shape[1], radius=2 * radius, sample_times=radius)
+        agents = sample_points_from_render(position, vis, vis.shape[0], vis.shape[1], radius=2 * radius,
+                                           sample_times=radius)
     else:
         agents = vis
-    return cal_local_velocity(position, agents, radius=radius, graph_sample=graph_sample)
+    return cal_local_velocity(position, agents, radius=radius, graph_sample=graph_sample, return_entropy=return_entropy)
 
 
 def bit_product_sum(x, y):
@@ -238,11 +261,12 @@ if __name__ == '__main__':
     # b = [1, 1, 1, 1, 1, 1, 2, 2]
     # print(calc_ent_grap(np.array(a), np.array(b)))
     # print(rgb_to_hsv(255,0,0))
-    # print(cosine_similarity([1, 2], [0, 0]))
+    # print(cosine_similarity([1, 1], [0, 0]))
     # cn = complex(-1, 0)
     # mag, ang = cmath.polar(cn)
     # print(ang)
     # vs = [(-1, -0, 5), (0, 1), (1, 0.5), (1, 1)]
     # print(velocity_variance(vs))
     # print(euclid_distance(vs[-1], vs[-2]))
+    print(math.cos((9-0)*math.pi/6))
     print('for test')
