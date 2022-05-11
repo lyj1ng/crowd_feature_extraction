@@ -145,7 +145,10 @@ class App:
                         self.tracks.append([(x, y)])
 
             sep_time = time.time() - start_time
-            print('\rframe_rate : ', round(1 / sep_time, 1), end=' fps ')
+            try:
+                print('\rframe_rate : ', round(1 / sep_time, 1), end=' fps ')
+            except:
+                print('\rframe_rate : ', end='')
 
             self.frame_idx += 1
             self.prev_gray = frame_gray
@@ -155,7 +158,7 @@ class App:
             cv.imshow('lk_track', vis)
             # cv.imshow('lk_track', result)
             ch = cv.waitKey(100)
-            if ch == ord('q'):  # quit
+            if ch == ord(' '):  # quit
                 break
 
 
@@ -164,10 +167,11 @@ def main():
     try:
         video_src = sys.argv[1]
     except:
-        video_src = "./tb_of.avi"
+        # video_src = "./tb_of.avi"
         # video_src = "./sim2_of.avi"
         # video_src = "./sim3_of.avi"
         # video_src = "./sng_of.avi"
+        video_src = "C:\\Users\\forev\\Videos\\媒体1.mp4"
     App(video_src).run()
     print('Done')
 
