@@ -6,7 +6,8 @@ print('\ncv2 status : ', cv2.useOptimized())
 # cap = cv2.VideoCapture('./sim2.mov')
 # cap = cv2.VideoCapture('./sim1.mov')
 # cap = cv2.VideoCapture('./tb_of.avi')
-cap = cv2.VideoCapture('./stopandgo.mp4')
+# cap = cv2.VideoCapture('./stopandgo.mp4')
+cap = cv2.VideoCapture('C:\\Users\\forev\\Videos\\媒体1.mp4')
 # cap = cv2.VideoCapture('./turbulence.mp4')
 
 # 获取第一帧
@@ -31,7 +32,7 @@ while True:
         print('\n\'\'\'End of File\'\'\'\n')
         break
     index += 1
-    if index % 3 != 0:  # 每 N 帧计算一次瞬时速度
+    if index % 20 != 0:  # 每 N 帧计算一次瞬时速度
         continue
     start_time = time.time()
     next_frame = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
@@ -61,6 +62,13 @@ while True:
 
     # 笛卡尔坐标转换为极坐标，获得极轴和极角
     mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+    print(ang.shape)
+    ang_step = 75
+    for i1 in range(0,(ang.shape[0]),ang_step):
+        for i2 in range(0,(ang.shape[1]),ang_step):
+            print(round(ang[i1][i2],1),end=' ')
+        print()
+    # input()
     hsv[..., 0] = ang * 180 / np.pi / 2
     hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
 
@@ -77,8 +85,8 @@ while True:
     cv2.namedWindow('frame2', 0);
     cv2.resizeWindow('frame2', 1280, 480);
     cv2.imshow('frame2', imgs_show)
-    k = cv2.waitKey(30) & 0xff
-    if k == ord('q'):  # quit
+    k = cv2.waitKey(100) & 0xff
+    if k == ord(' '):  # quit
         break
     elif k == ord('s'):  # save
         cv2.imwrite('opticalfb.png', frame2)
