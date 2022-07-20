@@ -37,8 +37,8 @@ feature_params = dict(maxCorners=30,
 
 class App:
     def __init__(self, video_src):
-        self.track_len = 60
-        self.detect_interval = 10
+        self.track_len = 10  # 60
+        self.detect_interval = 5  # 10
         self.tracks = []
         self.stable_nodes = []
         self.cam = cv.VideoCapture(video_src)
@@ -158,7 +158,7 @@ class App:
             # cv.resizeWindow('lk_track', 640, 480)
             cv.imshow('lk_track', vis)
             # cv.imshow('lk_track', result)
-            ch = cv.waitKey(10)
+            ch = cv.waitKey(100)
             if ch == ord(' '):  # quit
                 break
 
@@ -173,6 +173,7 @@ def main():
         # video_src = "./sim3_of.avi"
         # video_src = "./sng_of.avi"
         video_src = "C:\\Users\\forev\\Videos\\媒体1.mp4"
+        video_src = 'pic.mp4'
     App(video_src).run()
     print('Done')
 

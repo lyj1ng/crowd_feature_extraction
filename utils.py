@@ -36,7 +36,8 @@ def cal_local_velocity(position, agents, radius=10, graph_sample=False, return_e
                 if val > 10:
                     hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 即val
                     hues.append(hue)
-            local_color /= local_density
+            if local_density != 0:
+                local_color /= local_density
             if len(hues) > 2:
                 ent = calc_ent(np.array(hues))
             else:
