@@ -31,15 +31,15 @@ print('\ncv2 status : ', cv2.useOptimized())
 # umn [01,02,test01,test02]
 # metaFolder = 'C:\\Users\\forev\\Documents\\data\\umn\\training\\'
 # meta_save_folder = 'graph_save4\\umn\\'
-metaFolder = 'C:\\Users\\forev\\Documents\\data\\lp\\training\\'
-meta_save_folder = 'graph_save2\\lp\\'
+metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj2\\training\\'
+meta_save_folder = 'graph_save3\\hajj2\\'
 # metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj\\training\\'
 # meta_save_folder = 'graph_save4\\hajj\\'
 
-render_radius = 3
-cal_radius = 3
+render_radius = 75
+cal_radius = 75
 
-for subFolder in ['01','02','03','test01', 'test02']:
+for subFolder in ['01','test01',]:
     folder = metaFolder + subFolder[-2:] + '\\'
     save_folder = meta_save_folder + subFolder + '\\'
     if 'test' in subFolder:
@@ -50,6 +50,7 @@ for subFolder in ['01','02','03','test01', 'test02']:
     # 半径设置 2022-04-19 lp(15-30)     : 25-25    ; 50-50   ;  75-75   ; 100-100  ；125-125  ;  12;12
     #                   umn(8-15)     : 10-10    ;   20-20  ;  30-30  ; 5-5
     #                   hajj(6)    : 6-6      ;  12-12  ;   18-18 ;  3-3
+    #                   hajj2(50)   : 25         ; 50    ;   100
 
     # cap = cv2.VideoCapture('./stopandgo.mp4')
     frame_index = 0
