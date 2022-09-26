@@ -4,11 +4,13 @@ import os
 
 def image2video():
     # 得到图像路径
-    files = os.listdir("C:\\Users\\forev\\Desktop\\run\\3niurunning2\\")
+    directory = "C:\\Users\\forev\\Desktop\\run\\3niurunning2\\"
+    directory = "C:\\Users\\forev\\Documents\\data\\lp_2\\testing\\01\\"
+    files = os.listdir(directory)
     # 对图像排序
     files.sort(key=lambda x: int(x.split(".")[0]))
     # 获取图像宽高
-    h, w, _ = cv2.imread("C:\\Users\\forev\\Desktop\\run\\3niurunning2\\" + files[0]).shape
+    h, w, _ = cv2.imread(directory + files[0]).shape
     # 设置帧数
     fps = 30
     vid = []
@@ -20,8 +22,10 @@ def image2video():
 
     # 写入
     for file in files:
-        img = cv2.imread("C:\\Users\\forev\\Desktop\\run\\3niurunning2\\" + file)
+        img = cv2.imread(directory + file)
         vid.write(img)
+    print('done!')
 
 
-image2video()
+if __name__ == '__main__':
+    image2video()
