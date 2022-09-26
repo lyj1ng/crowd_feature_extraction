@@ -158,7 +158,7 @@ class App:
             # cv.resizeWindow('lk_track', 640, 480)
             cv.imshow('lk_track', vis)
             # cv.imshow('lk_track', result)
-            ch = cv.waitKey(100)
+            ch = cv.waitKey(30)
             if ch == ord(' '):  # quit
                 break
 
