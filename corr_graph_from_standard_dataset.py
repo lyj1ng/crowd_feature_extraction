@@ -31,15 +31,17 @@ print('\ncv2 status : ', cv2.useOptimized())
 # umn [01,02,test01,test02]
 # metaFolder = 'C:\\Users\\forev\\Documents\\data\\umn\\training\\'
 # meta_save_folder = 'graph_save4\\umn\\'
-metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj2\\training\\'
-meta_save_folder = 'graph_save3\\hajj2\\'
+# metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj2\\training\\'
+# meta_save_folder = 'graph_save3\\hajj2\\'
 # metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj\\training\\'
 # meta_save_folder = 'graph_save4\\hajj\\'
+metaFolder = 'C:\\Users\\forev\\Documents\\data\\lp_8\\training\\'
+meta_save_folder = 'graph_save\\lp_8\\'
 
-render_radius = 75
-cal_radius = 75
+render_radius = 25
+cal_radius = 25
 
-for subFolder in ['01','test01',]:
+for subFolder in ['01', '02', '03', '04', '05', 'test01', 'test02']:
     folder = metaFolder + subFolder[-2:] + '\\'
     save_folder = meta_save_folder + subFolder + '\\'
     if 'test' in subFolder:
@@ -75,7 +77,7 @@ for subFolder in ['01','test01',]:
 
     axis_i = list(range(cal_radius, height - cal_radius + 1, cal_radius * 2))
     axis_j = list(range(cal_radius, width - cal_radius + 1, cal_radius * 2))
-    print('output node shape:', len(axis_j),len(axis_i))
+    print('output node shape:', len(axis_j), len(axis_i))
     # 所有点位的x，y轴位置
     posis = []  # 存储所有node的position
     position_map = {}  # position_map[position] = its_index
@@ -178,7 +180,7 @@ for subFolder in ['01','test01',]:
                     #                  [2 * cal_radius, -2 * cal_radius],
                     #                  [2 * cal_radius, 2 * cal_radius], ]
                     neighbor_set = [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0],
-                                     [2 * cal_radius, 0], ]
+                                    [2 * cal_radius, 0], ]
                     for neighbor in neighbor_set:
                         neighbor_position = np.array(posi) + np.array(neighbor)
                         neighbor_position = [str(p) for p in neighbor_position]
@@ -237,7 +239,8 @@ for subFolder in ['01','test01',]:
                 # print(node_feature)
                 # input()
                 # np.save(save_folder+'0' * (5 - len(str(frame_index))) + str(frame_index)+'.npy', adj)
-                np.savez(save_folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + '.npz', f=node_feature, a=adj,
+                np.savez(save_folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + '.npz', f=node_feature,
+                         a=adj,
                          a2=spatio_adj)
 
             # real-time frame fresh rate
