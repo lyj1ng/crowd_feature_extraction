@@ -69,7 +69,7 @@ def show_sim_data_other(folder='sim_data', output=False):
                               (int(record_size[1] * zoom_in), int(record_size[0] * zoom_in)))
     vi = 0
     last_velocity = []
-    for frame_indx in range(3800, 4210):  # 控制读几帧画面
+    for frame_indx in range(1120, 3200):  # 控制读几帧画面
         with open(folder + '/' + str(frame_indx) + '.xml', 'r') as fp:
             agents = []  # 存储每个agent的画图信息
             for line in fp.readlines()[3:-2]:  # 读取xml内容
@@ -221,6 +221,6 @@ def show_sim_data_other(folder='sim_data', output=False):
 
 
 if __name__ == '__main__':
-    # show_sim_data(folder='bad_situation', output=False)
-    show_sim_data_other(folder='D:/simulation/congestion', output=False)
+    show_sim_data_other(folder='bad_situation', output=False)
+    # show_sim_data_other(folder='D:/simulation/congestion', output=False)
     # show_sim_data()

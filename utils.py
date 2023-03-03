@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import cmath, math
 
@@ -269,5 +271,61 @@ if __name__ == '__main__':
     # vs = [(-1, -0, 5), (0, 1), (1, 0.5), (1, 1)]
     # print(velocity_variance(vs))
     # print(euclid_distance(vs[-1], vs[-2]))
-    print(math.cos((9-0)*math.pi/6))
+    import time
+    from joblib import Parallel, delayed
+    from math import sqrt
+
+    save = [0 for i in range(10)]
+    arr = [i * 10 for i in range(10)]
+    print('测试并行的速度：')
+    start = time.time()
+
+
+    def cal(i):
+        a = [random.randint(1, 4) for j in range(20)]
+        b = [random.randint(1, 4) for j in range(20)]
+        for j in range(20):
+            rgb_to_hsv(255, 0, 0)
+            cn = complex(-1, 0)
+            mag, ang = cmath.polar(cn)
+        calc_ent(np.array(a))
+        calc_ent(np.array(b))
+        for j in range(2):
+            calc_ent_grap(np.array(a), np.array(b))  # temport inner
+            # calc_ent_grap(np.array(a), np.array(b))  # spatial inner
+            tmp = math.cos((9 - 0) * math.pi / 6)  # spatial inter
+            round(tmp)
+        return i + 1
+
+
+    res = Parallel(n_jobs=16)(delayed(cal)(i) for i in range(300))
+    # print(res)
+    print(time.time() - start)
+
+    print('测试非并行的速度：')
+    # cv.setUseOptimized(False)
+    start = time.time()
+    for _ in range(300):
+        a = [random.randint(1, 4) for j in range(20)]
+        b = [random.randint(1, 4) for j in range(20)]
+        for j in range(20):
+            rgb_to_hsv(255, 0, 0)
+            cn = complex(-1, 0)
+            mag, ang = cmath.polar(cn)
+
+        calc_ent(np.array(a))
+        calc_ent(np.array(b))
+        for j in range(2):
+            calc_ent_grap(np.array(a), np.array(b))  # temport inner
+            # calc_ent_grap(np.array(a), np.array(b))  # spatial inner
+            tmp = math.cos((9 - 0) * math.pi / 6)  # spatial inter
+            round(tmp)
+
+    print(time.time() - start)
+
     print('for test')
+    print(np.array(a), np.array(b))
+    print(calc_ent_grap(np.array(a), np.array(b)))
+    print(calc_ent_grap(np.array(b), np.array(a)))
+    print(math.cos((9 - 0) * math.pi / 6))
+    print(math.cos((0 - 9) * math.pi / 6))

@@ -29,23 +29,23 @@ print('\ncv2 status : ', cv2.useOptimized())
 # save_folder = 'graph_save3\\hajj\\test02\\'
 
 # umn [01,02,test01,test02]
-# metaFolder = 'C:\\Users\\forev\\Documents\\data\\umn\\training\\'
-# meta_save_folder = 'graph_save4\\umn\\'
+metaFolder = 'C:\\Users\\forev\\Documents\\data\\umn\\training\\'
+meta_save_folder = 'graph_save\\umn\\'
 # metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj2\\training\\'
 # meta_save_folder = 'graph_save3\\hajj2\\'
-metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj\\training\\'  # 读取数据位置
-meta_save_folder = 'graph_save3\\hajj\\'  # 存储数据位置
-# metaFolder = 'C:\\Users\\forev\\Documents\\data\\lp\\training\\'
-# meta_save_folder = 'graph_save5\\lp\\'
+# metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj\\training\\'
+# meta_save_folder = 'graph_save\\hajj\\'
+# metaFolder = 'C:\\Users\\forev\\Documents\\data\\lp_8\\training\\'
+# meta_save_folder = 'graph_save3\\lp_8\\'
 # metaFolder = 'C:\\Users\\forev\\Documents\\data\\hajj2_down\\training\\'
 # meta_save_folder = 'graph_save3\\hajj2_down\\'
 
 
-render_radius = 18  # 特征提取的参数：网格的宽度（像素数）
-cal_radius = 18  # # 特征提取的参数：网格的宽度（像素数）
+render_radius = 10
+cal_radius = 10
 
-# for subFolder in ['01', '02', '03', '04', '05', 'test01', 'test02']:
-for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读取哪些子文件夹
+for subFolder in ['01', '02', '03', '04', '05', 'test01', 'test02']:
+# for subFolder in ['01', 'test01', ]:
     folder = metaFolder + subFolder[-2:] + '\\'
     save_folder = meta_save_folder + subFolder + '\\'
     if 'test' in subFolder:
@@ -76,10 +76,10 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
     width, height = int(width), int(height)
     # height,width = int(width), int(height)
     print('video size  : ', width, height)
-    # with open('./instability_graph_from_video.csv', 'w+') as fp:
-    #     # 进行节点稳定性信息的保存
-    #     fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,'
-    #              'mutual info:right\n')
+    with open('./instability_graph_from_video.csv', 'w+') as fp:
+        # 进行节点稳定性信息的保存
+        fp.write('frame index,node position,ent,mutual info:up,mutual info:down,mutual info:left,'
+                 'mutual info:right\n')
 
     axis_i = list(range(int(cal_radius), int(height - cal_radius + 1), int(cal_radius * 2)))
     axis_j = list(range(int(cal_radius), int(width - cal_radius + 1), int(cal_radius * 2)))
@@ -95,11 +95,11 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
             position_map[str(i) + ';' + str(j)] = node_index
             node_index += 1
 
+    # frame_idx = 0
     vary = None
     index = -1
-    total_this_time = 0
-    neighbor_set = [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0], [2 * cal_radius, 0], ]
-
+    visualize = False
+    oldFasion = False
     while True:
         try:
             frame2 = cv2.imread(folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + ".jpg")
@@ -127,15 +127,14 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
         # pyr_scale 构建图像金字塔尺度 levels 图像金字塔层数  winsize 窗口尺寸，值越大探测高速运动的物体越容易，但是越模糊，同时对噪声的容错性越强
         # iterations 对每层金字塔的迭代次数  poly_n 每个像素中找到多项式展开的邻域像素的大小。越大越光滑，也越稳定
         # poly_sigma 高斯标准差，用来平滑倒数   flags 光流方式，如FARNEBACK_GAUSSIAN
-
-        start_time = time.time()  # 21.0 fps here for LP3
+        # start_time = time.time()  # 21.0 fps here for LP3
         # 笛卡尔坐标转换为极坐标，获得极轴和极角
         mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
         hsv[..., 0] = ang * 180 / np.pi / 2
         hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
 
         rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
+        # print(index)
         if True:
             frame = rgb
 
@@ -151,36 +150,32 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
             plots = []  # 存储所有node的即时local color
             spatio_inner = []
             for posi in posis:
-                c, spatial_entropy = local_color_from_render((posi[0], posi[1]), frame, int(cal_radius),
-                                                             graph_sample=False,
+                # print(posi,index)
+                c, spatial_entropy = local_color_from_render((posi[0], posi[1]), frame, int(cal_radius), graph_sample=False,
                                                              return_entropy=True)
                 c = [int(cc) if cc > 0 else 0 for cc in c]
                 plots.append(c)
                 spatio_inner.append(spatial_entropy)
-
+            # print(spatio_inner)
+            # input()
             # start_time = time.time()  # inf fps here for LP3
             # 局部速度可视化 同时更新 vary：存储过去一段时间的速度变化，用于计算信息熵
-            saveNpzFile = 1
             for i in range(len(posis)):
-
-                # posi = posis[i]
+                # print(i)
+                posi = posis[i]
                 hue, sat, val = rgb_to_hsv(plots[i][1], plots[i][2], plots[i][0])
-
+                # print(hue)
+                # input()
                 hue = int(hue // 30)  # 速度方向分箱 的 信息熵 ：也可以计算速度大小分箱的信息熵 即val
                 if len(vary[i]) < 20:  # 如果速度变化不足20个，则先不计算信息熵
                     vary[i].append(hue)
-                    saveNpzFile *= 0
                 else:
                     # 数组的拼接
                     vary[i] = vary[i][1:] + [hue]
-
-            if saveNpzFile:
-                for i in range(len(posis)):
-                    posi = posis[i]
                     # 计算信息熵
                     ent = calc_ent(np.array(vary[i]))
                     # 计算互信息：上下左右
-                    # mutual_info = []
+                    mutual_info = []
 
                     this_position = [str(p) for p in np.array(posi)]
                     this_position = ';'.join(this_position)
@@ -191,26 +186,25 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
                     #                  [-2 * cal_radius, -2 * cal_radius], [-2 * cal_radius, 2 * cal_radius],
                     #                  [2 * cal_radius, -2 * cal_radius],
                     #                  [2 * cal_radius, 2 * cal_radius], ]
-
+                    neighbor_set = [[0, -2 * cal_radius], [0, 2 * cal_radius], [-2 * cal_radius, 0],
+                                    [2 * cal_radius, 0], ]
                     for neighbor in neighbor_set:
                         neighbor_position = np.array(posi) + np.array(neighbor)
                         neighbor_position = [str(p) for p in neighbor_position]
                         neighbor_position = ';'.join(neighbor_position)
                         # print(neighbor_position,position_map)
                         if neighbor_position in position_map:
-                            if this_index < position_map[neighbor_position]:
-                                continue
                             n_vary = np.array(vary[position_map[neighbor_position]])
                             mi = calc_ent_grap(np.array(vary[i]), n_vary)
                             adj[this_index][position_map[neighbor_position]] = mi
-                            adj[position_map[neighbor_position]][this_index] = mi
                             # print(n_vary[-1],vary[i][-1])
                             cos = round(math.cos((n_vary[-1] - vary[i][-1]) * math.pi / 6), 2)
                             spatio_adj[this_index][position_map[neighbor_position]] = cos
-                            spatio_adj[position_map[neighbor_position]][this_index] = cos
-
+                            if oldFasion:
+                                mutual_info.append(mi)
+                        elif oldFasion:
+                            mutual_info.append(None)
                     # 存这个点位的信息
-                    # 实际上节点的信息就是【ent,spatio_ent】下面的操作就是进行了向量化
                     ent_vec = [0] * 15
                     if ent < 1:
                         # 0到1之间的ent，占据前8个vec
@@ -235,6 +229,14 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
                         spa_vec[-1] = 1
                     node_feature[this_index] = ent_vec[:] + spa_vec[:]
                     # node_feature[this_index] = spa_vec[:]
+                    if oldFasion:
+                        with open('./instability_graph_from_video.csv', 'a+') as fp:
+                            fp.write(
+                                '0' * (5 - len(str(frame_index))) + str(frame_index) + ',' + str(posi[0]) + ';' + str(
+                                    posi[1])
+                                + ',' + str(ent) + ',' + str(mutual_info) + '\n')
+                if visualize:
+                    cv2.circle(frame, (posi[1], posi[0]), render_radius, plots[i], -1)
 
             if node_feature[0]:
                 adj = np.array(adj)
@@ -244,20 +246,27 @@ for subFolder in ['01', '02', 'test01', 'test02', ]:  # metaFolder里面要读�
                 # print(node_feature)
                 # input()
                 # np.save(save_folder+'0' * (5 - len(str(frame_index))) + str(frame_index)+'.npy', adj)
-                np.savez(save_folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + '.npz',
-                         f=node_feature,
+                np.savez(save_folder + '0' * (5 - len(str(frame_index))) + str(frame_index) + '.npz', f=node_feature,
                          a=adj,
                          a2=spatio_adj)
-                # 最终存储到一个npz文件里，f为节点信息，a、a2为两个边的邻接矩阵
+
+            # real-time frame fresh rate
+            sep_time = time.time() - start_time
+            fr = round(1 / sep_time, 1) if sep_time else 'inf'
+            print('\rframe_rate : ', fr, end=' fps ')
+
+            # frame_idx += 1
+            if visualize:
+                cv2.namedWindow('lk_track', 0)
+                cv2.imshow('lk_track', frame)
+                ch = cv2.waitKey(3)
+                if ch == ord(' '):  # quit
+                    break
+
+        sep_time = time.time() - start_time
+        print('\rframe_rate : ', round(1 / (sep_time + 1e-6), 1), end=' fps ' + '.' * (index // 3 % 4) + ' ' * 10)
+
         prvs = next_frame
 
-        # real-time frame fresh rate
-        sep_time = time.time() - start_time
-        total_this_time += sep_time
-        fr = round(1 / sep_time, 2) if sep_time else 'inf'
-        print('\rframe_rate : ', fr, end=' fps ' + '.' * (4 - index // 3 % 4) + ' ' * 10)
-    # print('LP', total_this_time / 50, total_this_time / 191)
-    # print('UMN', total_this_time / 117, total_this_time / 105)
-    # print('HAJJ', total_this_time / 213, )
-    # sep_time = time.time() - start_time
-    # print('\rframe_rate : ', round(1 / (sep_time + 1e-6), 1), end=' fps ' + '.' * (index // 3 % 4) + ' ' * 10)
+    if visualize:
+        cv2.destroyAllWindows()
